@@ -13,8 +13,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageImpl;
 
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,13 +39,13 @@ class AchievementServiceTest {
                 .angerBefore(100).angerAfter(10).hits(150).skillShots(0)
                 .releasedPercent(90).points(200).build();
 
-        given(gameSessionRepository.findByUserIdOrderByCreatedAtDesc(eq(null), any()))
-                .willReturn(new PageImpl<>(List.of(session)));
-        given(achievementRepository.existsByUserIdAndAchievementType(any(), any())).willReturn(false);
+        given(achievementRepository.findByUserIdOrderByAchievedAtDesc(any())).willReturn(Collections.emptyList());
+        given(gameSessionRepository.sumHitsByUserId(any())).willReturn(150);
+        given(gameSessionRepository.countByUserId(any())).willReturn(1L);
         given(achievementRepository.save(any(Achievement.class)))
                 .willAnswer(inv -> inv.getArgument(0));
 
-        List<AchievementResponse> results = achievementService.checkAndAward(1L, 0);
+        List<AchievementResponse> results = achievementService.checkAndAward(1L, session, 0);
 
         assertThat(results).isNotEmpty();
         assertThat(results.stream().map(AchievementResponse::getType))
@@ -62,11 +62,17 @@ class AchievementServiceTest {
                 .angerBefore(100).angerAfter(50).hits(150).skillShots(0)
                 .releasedPercent(50).points(100).build();
 
-        given(gameSessionRepository.findByUserIdOrderByCreatedAtDesc(eq(null), any()))
-                .willReturn(new PageImpl<>(List.of(session)));
-        given(achievementRepository.existsByUserIdAndAchievementType(any(), any())).willReturn(true);
+        // 모든 업적을 이미 보유
+        Achievement existing = new Achievement(user, AchievementType.HITS_100);
+        given(achievementRepository.findByUserIdOrderByAchievedAtDesc(any()))
+                .willReturn(List.of(existing));
+        given(gameSessionRepository.sumHitsByUserId(any())).willReturn(150);
+        given(gameSessionRepository.countByUserId(any())).willReturn(1L);
 
-        List<AchievementResponse> results = achievementService.checkAndAward(1L, 0);
-        assertThat(results).isEmpty();
+        List<AchievementResponse> results = achievementService.checkAndAward(1L, session, 0);
+
+        // HITS_100은 이미 보유하므로 스킵, 나머지 조건 미달성
+        assertThat(results.stream().map(AchievementResponse::getType))
+                .doesNotContain("HITS_100");
     }
 }

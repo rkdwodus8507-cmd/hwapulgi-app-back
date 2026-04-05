@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -15,6 +16,7 @@ import java.util.List;
 public class StreakService {
 
     private final GameSessionRepository gameSessionRepository;
+    private final Clock clock;
 
     public StreakResponse getStreak(Long userId) {
         List<LocalDate> playDates = gameSessionRepository.findDistinctPlayDatesByUserId(userId);
@@ -33,7 +35,7 @@ public class StreakService {
     }
 
     private int calculateCurrentStreak(List<LocalDate> sortedDatesDesc) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         LocalDate latest = sortedDatesDesc.get(0);
         if (latest.isBefore(today.minusDays(1))) {
             return 0;

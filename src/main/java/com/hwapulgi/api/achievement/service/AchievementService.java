@@ -14,7 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -33,46 +36,55 @@ public class AchievementService {
     }
 
     @Transactional
-    public List<AchievementResponse> checkAndAward(Long userId, int currentStreak) {
+    public List<AchievementResponse> checkAndAward(Long userId, GameSession latestSession, int currentStreak) {
         User user = userService.findById(userId);
-        List<GameSession> allSessions = gameSessionRepository.findByUserIdOrderByCreatedAtDesc(user.getId(), null).getContent();
 
-        int totalHits = allSessions.stream().mapToInt(GameSession::getHits).sum();
-        int totalSessions = allSessions.size();
-        GameSession latest = allSessions.isEmpty() ? null : allSessions.get(0);
+        // 배치 조회: 이미 보유한 업적 타입 세트
+        Set<AchievementType> existing = achievementRepository.findByUserIdOrderByAchievedAtDesc(userId).stream()
+                .map(Achievement::getAchievementType)
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(AchievementType.class)));
+
+        // 집계 쿼리로 통계 조회 (전체 세션 로드 X)
+        int totalHits = gameSessionRepository.sumHitsByUserId(userId);
+        long totalSessions = gameSessionRepository.countByUserId(userId);
 
         List<AchievementResponse> newAchievements = new ArrayList<>();
 
-        checkAndAward(user, AchievementType.HITS_100, totalHits >= 100, newAchievements);
-        checkAndAward(user, AchievementType.HITS_500, totalHits >= 500, newAchievements);
-        checkAndAward(user, AchievementType.HITS_1000, totalHits >= 1000, newAchievements);
+        // 타격 수
+        tryAward(user, AchievementType.HITS_100, totalHits >= 100, existing, newAchievements);
+        tryAward(user, AchievementType.HITS_500, totalHits >= 500, existing, newAchievements);
+        tryAward(user, AchievementType.HITS_1000, totalHits >= 1000, existing, newAchievements);
 
-        checkAndAward(user, AchievementType.SESSIONS_10, totalSessions >= 10, newAchievements);
-        checkAndAward(user, AchievementType.SESSIONS_50, totalSessions >= 50, newAchievements);
-        checkAndAward(user, AchievementType.SESSIONS_100, totalSessions >= 100, newAchievements);
+        // 세션 수
+        tryAward(user, AchievementType.SESSIONS_10, totalSessions >= 10, existing, newAchievements);
+        tryAward(user, AchievementType.SESSIONS_50, totalSessions >= 50, existing, newAchievements);
+        tryAward(user, AchievementType.SESSIONS_100, totalSessions >= 100, existing, newAchievements);
 
-        if (latest != null) {
-            int release = latest.getReleasedPercent();
-            checkAndAward(user, AchievementType.RELEASE_80, release >= 80, newAchievements);
-            checkAndAward(user, AchievementType.RELEASE_90, release >= 90, newAchievements);
-            checkAndAward(user, AchievementType.RELEASE_100, release >= 100, newAchievements);
+        // 해소율 + 포인트 (최신 세션 기준)
+        if (latestSession != null) {
+            int release = latestSession.getReleasedPercent();
+            tryAward(user, AchievementType.RELEASE_80, release >= 80, existing, newAchievements);
+            tryAward(user, AchievementType.RELEASE_90, release >= 90, existing, newAchievements);
+            tryAward(user, AchievementType.RELEASE_100, release >= 100, existing, newAchievements);
 
-            int points = latest.getPoints();
-            checkAndAward(user, AchievementType.POINTS_500, points >= 500, newAchievements);
-            checkAndAward(user, AchievementType.POINTS_1000, points >= 1000, newAchievements);
+            int points = latestSession.getPoints();
+            tryAward(user, AchievementType.POINTS_500, points >= 500, existing, newAchievements);
+            tryAward(user, AchievementType.POINTS_1000, points >= 1000, existing, newAchievements);
         }
 
-        checkAndAward(user, AchievementType.STREAK_3, currentStreak >= 3, newAchievements);
-        checkAndAward(user, AchievementType.STREAK_7, currentStreak >= 7, newAchievements);
-        checkAndAward(user, AchievementType.STREAK_30, currentStreak >= 30, newAchievements);
+        // 스트릭
+        tryAward(user, AchievementType.STREAK_3, currentStreak >= 3, existing, newAchievements);
+        tryAward(user, AchievementType.STREAK_7, currentStreak >= 7, existing, newAchievements);
+        tryAward(user, AchievementType.STREAK_30, currentStreak >= 30, existing, newAchievements);
 
         return newAchievements;
     }
 
-    private void checkAndAward(User user, AchievementType type, boolean condition,
-                               List<AchievementResponse> newAchievements) {
-        if (condition && !achievementRepository.existsByUserIdAndAchievementType(user.getId(), type)) {
+    private void tryAward(User user, AchievementType type, boolean condition,
+                          Set<AchievementType> existing, List<AchievementResponse> newAchievements) {
+        if (condition && !existing.contains(type)) {
             Achievement achievement = achievementRepository.save(new Achievement(user, type));
+            existing.add(type);
             newAchievements.add(AchievementResponse.from(achievement));
             log.info("Achievement unlocked: userId={}, type={}", user.getId(), type);
         }

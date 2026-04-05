@@ -62,7 +62,8 @@ public class GameSessionService {
                 .memo(request.getMemo())
                 .build();
 
-        GameSessionResponse response = GameSessionResponse.from(gameSessionRepository.save(session));
+        GameSession savedSession = gameSessionRepository.save(session);
+        GameSessionResponse response = GameSessionResponse.from(savedSession);
 
         try {
             rankingService.addPoints(userId, response.getPoints());
@@ -73,7 +74,7 @@ public class GameSessionService {
 
         try {
             int currentStreak = streakService.getCurrentStreak(userId);
-            achievementService.checkAndAward(userId, currentStreak);
+            achievementService.checkAndAward(userId, savedSession, currentStreak);
         } catch (Exception e) {
             log.error("Failed to check achievements for userId={}: {}", userId, e.getMessage());
         }

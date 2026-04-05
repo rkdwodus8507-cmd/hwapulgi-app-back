@@ -17,6 +17,11 @@ public interface GameSessionRepository extends JpaRepository<GameSession, UUID> 
     @Query("SELECT gs FROM GameSession gs WHERE gs.user.id = :userId AND gs.createdAt >= :from")
     List<GameSession> findByUserIdAndCreatedAtAfter(@Param("userId") Long userId, @Param("from") LocalDateTime from);
 
+    @Query("SELECT COALESCE(SUM(gs.hits), 0) FROM GameSession gs WHERE gs.user.id = :userId")
+    int sumHitsByUserId(@Param("userId") Long userId);
+
+    long countByUserId(Long userId);
+
     @Query("SELECT DISTINCT CAST(gs.createdAt AS LocalDate) FROM GameSession gs WHERE gs.user.id = :userId ORDER BY CAST(gs.createdAt AS LocalDate) DESC")
     List<java.time.LocalDate> findDistinctPlayDatesByUserId(@Param("userId") Long userId);
 
