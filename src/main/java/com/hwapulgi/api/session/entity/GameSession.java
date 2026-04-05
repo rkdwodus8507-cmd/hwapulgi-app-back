@@ -70,10 +70,14 @@ public class GameSession {
         this.memo = memo;
     }
 
+    /**
+     * 게임 후 분노 수치만 조정. points는 세션 생성 시점에 확정되므로 변경하지 않음.
+     */
     public void updateAngerAfter(int angerAfter) {
         this.angerAfter = angerAfter;
         if (this.angerBefore > 0) {
-            this.releasedPercent = (int) (((double)(this.angerBefore - angerAfter) / this.angerBefore) * 100);
+            int calculated = (int) (((double)(this.angerBefore - angerAfter) / this.angerBefore) * 100);
+            this.releasedPercent = Math.max(0, calculated);
         }
     }
 }

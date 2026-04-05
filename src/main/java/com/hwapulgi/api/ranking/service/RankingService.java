@@ -35,18 +35,18 @@ public class RankingService {
     }
 
     public void updateReleaseRate(Long userId, int releasePercent) {
-        String weeklyKey = buildKey("release", "weekly", currentWeekKey());
-        String monthlyKey = buildKey("release", "monthly", currentMonthKey());
-        String allTimeKey = buildKey("release", "all_time", "all");
-
         ZSetOperations<String, String> ops = redisTemplate.opsForZSet();
         String member = String.valueOf(userId);
 
-        Double current = ops.score(allTimeKey, member);
-        if (current == null || releasePercent > current) {
-            ops.add(weeklyKey, member, releasePercent);
-            ops.add(monthlyKey, member, releasePercent);
-            ops.add(allTimeKey, member, releasePercent);
+        updateIfHigher(ops, buildKey("release", "weekly", currentWeekKey()), member, releasePercent);
+        updateIfHigher(ops, buildKey("release", "monthly", currentMonthKey()), member, releasePercent);
+        updateIfHigher(ops, buildKey("release", "all_time", "all"), member, releasePercent);
+    }
+
+    private void updateIfHigher(ZSetOperations<String, String> ops, String key, String member, int score) {
+        Double current = ops.score(key, member);
+        if (current == null || score > current) {
+            ops.add(key, member, score);
         }
     }
 

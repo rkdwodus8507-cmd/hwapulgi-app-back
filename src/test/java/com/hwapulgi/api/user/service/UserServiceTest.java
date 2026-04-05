@@ -39,7 +39,7 @@ class UserServiceTest {
     void getOrCreateUser_newUser_createsAndReturns() {
         given(userRepository.findByExternalId("2")).willReturn(Optional.empty());
         User newUser = new User("2", "새유저");
-        given(userRepository.save(any(User.class))).willReturn(newUser);
+        given(userRepository.saveAndFlush(any(User.class))).willReturn(newUser);
 
         User result = userService.getOrCreateUser(2L, "새유저");
 

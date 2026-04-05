@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Component
@@ -46,19 +47,20 @@ public class RankingSnapshotScheduler {
 
         if (tuples == null) return;
 
-        int rank = 1;
+        AtomicInteger rank = new AtomicInteger(1);
         for (ZSetOperations.TypedTuple<String> tuple : tuples) {
             Long userId = Long.parseLong(tuple.getValue());
+            int currentRank = rank.getAndIncrement();
             userRepository.findById(userId).ifPresent(user -> {
                 RankingSnapshot snapshot = RankingSnapshot.builder()
                         .user(user)
                         .periodType(periodType)
                         .periodKey(periodKey)
                         .totalPoints(tuple.getScore().intValue())
+                        .rank(currentRank)
                         .build();
                 snapshotRepository.save(snapshot);
             });
-            rank++;
         }
     }
 }

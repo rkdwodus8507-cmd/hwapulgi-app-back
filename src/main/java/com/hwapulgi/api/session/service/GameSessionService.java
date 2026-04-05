@@ -2,6 +2,7 @@ package com.hwapulgi.api.session.service;
 
 import com.hwapulgi.api.common.exception.BusinessException;
 import com.hwapulgi.api.common.exception.ErrorCode;
+import com.hwapulgi.api.ranking.service.RankingService;
 import com.hwapulgi.api.session.dto.GameSessionCreateRequest;
 import com.hwapulgi.api.session.dto.GameSessionResponse;
 import com.hwapulgi.api.session.entity.GameSession;
@@ -10,6 +11,7 @@ import com.hwapulgi.api.user.entity.User;
 import com.hwapulgi.api.user.service.UserService;
 import com.hwapulgi.api.user.dto.UserStatsResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -26,6 +29,7 @@ public class GameSessionService {
 
     private final GameSessionRepository gameSessionRepository;
     private final UserService userService;
+    private final RankingService rankingService;
 
     @Transactional
     public GameSessionResponse createSession(Long userId, GameSessionCreateRequest request) {
@@ -53,7 +57,16 @@ public class GameSessionService {
                 .memo(request.getMemo())
                 .build();
 
-        return GameSessionResponse.from(gameSessionRepository.save(session));
+        GameSessionResponse response = GameSessionResponse.from(gameSessionRepository.save(session));
+
+        try {
+            rankingService.addPoints(userId, response.getPoints());
+            rankingService.updateReleaseRate(userId, response.getReleasedPercent());
+        } catch (Exception e) {
+            log.error("Failed to update ranking for userId={}: {}", userId, e.getMessage());
+        }
+
+        return response;
     }
 
     public Page<GameSessionResponse> getMySessions(Long userId, Pageable pageable) {

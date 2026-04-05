@@ -1,6 +1,7 @@
 package com.hwapulgi.api.session.service;
 
 import com.hwapulgi.api.common.exception.BusinessException;
+import com.hwapulgi.api.ranking.service.RankingService;
 import com.hwapulgi.api.session.dto.GameSessionCreateRequest;
 import com.hwapulgi.api.session.dto.GameSessionResponse;
 import com.hwapulgi.api.session.entity.GameSession;
@@ -29,6 +30,9 @@ class GameSessionServiceTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private RankingService rankingService;
 
     @InjectMocks
     private GameSessionService gameSessionService;

@@ -3,7 +3,6 @@ package com.hwapulgi.api.session.controller;
 import com.hwapulgi.api.auth.dto.UserInfo;
 import com.hwapulgi.api.auth.service.AuthService;
 import com.hwapulgi.api.common.response.ApiResponse;
-import com.hwapulgi.api.ranking.service.RankingService;
 import com.hwapulgi.api.session.dto.AngerAfterUpdateRequest;
 import com.hwapulgi.api.session.dto.GameSessionCreateRequest;
 import com.hwapulgi.api.session.dto.GameSessionResponse;
@@ -25,7 +24,6 @@ import java.util.UUID;
 public class GameSessionController {
 
     private final GameSessionService gameSessionService;
-    private final RankingService rankingService;
     private final AuthService authService;
     private final UserService userService;
 
@@ -35,13 +33,7 @@ public class GameSessionController {
             @Valid @RequestBody GameSessionCreateRequest request) {
         UserInfo userInfo = authService.authenticate(token);
         User user = userService.getOrCreateUser(userInfo.getUserId(), userInfo.getNickname());
-
-        GameSessionResponse response = gameSessionService.createSession(user.getId(), request);
-
-        rankingService.addPoints(user.getId(), response.getPoints());
-        rankingService.updateReleaseRate(user.getId(), response.getReleasedPercent());
-
-        return ApiResponse.ok(response);
+        return ApiResponse.ok(gameSessionService.createSession(user.getId(), request));
     }
 
     @GetMapping
