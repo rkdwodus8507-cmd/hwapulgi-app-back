@@ -5,6 +5,7 @@ import com.hwapulgi.api.common.exception.ErrorCode;
 import com.hwapulgi.api.ranking.service.RankingService;
 import com.hwapulgi.api.session.dto.GameSessionCreateRequest;
 import com.hwapulgi.api.session.dto.GameSessionResponse;
+import com.hwapulgi.api.session.dto.TargetStatsResponse;
 import com.hwapulgi.api.session.entity.GameSession;
 import com.hwapulgi.api.session.repository.GameSessionRepository;
 import com.hwapulgi.api.user.entity.User;
@@ -93,6 +94,10 @@ public class GameSessionService {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
         return session;
+    }
+
+    public List<TargetStatsResponse> getTargetStats(Long userId) {
+        return gameSessionRepository.findTargetStatsByUserId(userId);
     }
 
     public UserStatsResponse getUserStats(Long userId, LocalDateTime from) {
