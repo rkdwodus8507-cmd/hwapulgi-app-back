@@ -1,6 +1,7 @@
 package com.hwapulgi.api.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hwapulgi.api.achievement.repository.AchievementRepository;
 import com.hwapulgi.api.session.dto.GameSessionCreateRequest;
 import com.hwapulgi.api.session.repository.GameSessionRepository;
 import com.hwapulgi.api.user.entity.User;
@@ -40,10 +41,14 @@ class SessionApiTest {
     private GameSessionRepository gameSessionRepository;
 
     @Autowired
+    private AchievementRepository achievementRepository;
+
+    @Autowired
     private StringRedisTemplate redisTemplate;
 
     @BeforeEach
     void setUp() {
+        achievementRepository.deleteAll();
         gameSessionRepository.deleteAll();
         userRepository.deleteAll();
         Set<String> keys = redisTemplate.keys("ranking:*");

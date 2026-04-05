@@ -18,19 +18,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("local")
-class UserApiTest {
+class StreakApiTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private GameSessionRepository gameSessionRepository;
-
-    @Autowired
-    private AchievementRepository achievementRepository;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private AchievementRepository achievementRepository;
+    @Autowired private GameSessionRepository gameSessionRepository;
+    @Autowired private UserRepository userRepository;
 
     @BeforeEach
     void setUp() {
@@ -40,19 +33,12 @@ class UserApiTest {
     }
 
     @Test
-    void getMyProfile_autoCreatesUser() throws Exception {
-        mockMvc.perform(get("/api/v1/users/me")
+    void getMyStreak_noSessions() throws Exception {
+        mockMvc.perform(get("/api/v1/streaks/me")
                         .header("Authorization", "1:테스트유저"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.nickname").value("테스트유저"));
-    }
-
-    @Test
-    void getMyStats_emptyStats() throws Exception {
-        mockMvc.perform(get("/api/v1/users/me/stats")
-                        .header("Authorization", "1:테스트유저"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalSessions").value(0));
+                .andExpect(jsonPath("$.data.currentStreak").value(0))
+                .andExpect(jsonPath("$.data.bestStreak").value(0))
+                .andExpect(jsonPath("$.data.totalPlayDays").value(0));
     }
 }
