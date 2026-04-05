@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface GameSessionRepository extends JpaRepository<GameSession, UUID> {
@@ -16,6 +17,10 @@ public interface GameSessionRepository extends JpaRepository<GameSession, UUID> 
 
     @Query("SELECT gs FROM GameSession gs WHERE gs.user.id = :userId AND gs.createdAt >= :from")
     List<GameSession> findByUserIdAndCreatedAtAfter(@Param("userId") Long userId, @Param("from") LocalDateTime from);
+
+    Optional<GameSession> findFirstByUserIdOrderByCreatedAtDesc(Long userId);
+
+    long countByUserIdAndCreatedAtBetween(Long userId, LocalDateTime from, LocalDateTime to);
 
     @Query("SELECT COALESCE(SUM(gs.hits), 0) FROM GameSession gs WHERE gs.user.id = :userId")
     int sumHitsByUserId(@Param("userId") Long userId);
