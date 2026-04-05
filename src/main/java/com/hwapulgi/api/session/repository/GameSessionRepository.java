@@ -24,6 +24,16 @@ public interface GameSessionRepository extends JpaRepository<GameSession, UUID> 
 
     long countByUserIdAndCreatedAtBetween(Long userId, LocalDateTime from, LocalDateTime to);
 
+    @Query("SELECT gs.customTarget FROM GameSession gs WHERE gs.user.id = :userId " +
+           "AND gs.customTarget IS NOT NULL AND gs.customTarget <> '' " +
+           "GROUP BY gs.customTarget ORDER BY MAX(gs.createdAt) DESC")
+    List<String> findDistinctCustomTargetsByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT gs.targetNickname FROM GameSession gs WHERE gs.user.id = :userId " +
+           "AND gs.targetNickname IS NOT NULL AND gs.targetNickname <> '' " +
+           "GROUP BY gs.targetNickname ORDER BY MAX(gs.createdAt) DESC")
+    List<String> findDistinctNicknamesByUserId(@Param("userId") Long userId);
+
     @Query("SELECT COALESCE(SUM(gs.hits), 0) FROM GameSession gs WHERE gs.user.id = :userId")
     int sumHitsByUserId(@Param("userId") Long userId);
 

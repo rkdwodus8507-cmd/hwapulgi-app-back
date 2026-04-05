@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Tag(name = "Session", description = "게임 세션 관리")
@@ -69,5 +70,23 @@ public class GameSessionController {
         UserInfo userInfo = authService.authenticate(token);
         User user = userService.getOrCreateUser(userInfo.getUserId(), userInfo.getNickname());
         return ApiResponse.ok(gameSessionService.updateAngerAfter(id, user.getId(), request.getAngerAfter()));
+    }
+
+    @Operation(summary = "최근 사용한 대상 목록", description = "자동완성용 최근 커스텀 대상 (최대 6개)")
+    @GetMapping("/recent-targets")
+    public ApiResponse<List<String>> getRecentTargets(
+            @RequestHeader(value = "Authorization", defaultValue = "") String token) {
+        UserInfo userInfo = authService.authenticate(token);
+        User user = userService.getOrCreateUser(userInfo.getUserId(), userInfo.getNickname());
+        return ApiResponse.ok(gameSessionService.getRecentCustomTargets(user.getId()));
+    }
+
+    @Operation(summary = "최근 사용한 닉네임 목록", description = "자동완성용 최근 닉네임 (최대 5개)")
+    @GetMapping("/recent-nicknames")
+    public ApiResponse<List<String>> getRecentNicknames(
+            @RequestHeader(value = "Authorization", defaultValue = "") String token) {
+        UserInfo userInfo = authService.authenticate(token);
+        User user = userService.getOrCreateUser(userInfo.getUserId(), userInfo.getNickname());
+        return ApiResponse.ok(gameSessionService.getRecentNicknames(user.getId()));
     }
 }

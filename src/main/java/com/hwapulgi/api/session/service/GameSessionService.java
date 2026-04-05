@@ -108,6 +108,18 @@ public class GameSessionService {
         return session;
     }
 
+    public List<String> getRecentCustomTargets(Long userId) {
+        return gameSessionRepository.findDistinctCustomTargetsByUserId(userId).stream()
+                .limit(6)
+                .toList();
+    }
+
+    public List<String> getRecentNicknames(Long userId) {
+        return gameSessionRepository.findDistinctNicknamesByUserId(userId).stream()
+                .limit(5)
+                .toList();
+    }
+
     public List<TargetStatsResponse> getTargetStats(Long userId) {
         return gameSessionRepository.findTargetStatsByUserId(userId);
     }
