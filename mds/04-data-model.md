@@ -6,25 +6,25 @@
 ┌──────────────────────┐
 │       users          │
 ├──────────────────────┤
-│ id         BIGINT PK │──┐
-│ external_id VARCHAR  │  │  (UNIQUE)
-│ nickname   VARCHAR   │  │
-│ created_at TIMESTAMP │  │
-│ updated_at TIMESTAMP │  │
-└──────────────────────┘  │
-                          │
-         ┌────────────────┤
-         │                │
-         ▼                ▼
-┌─────────────────────────┐  ┌─────────────────────────┐
-│     game_sessions       │  │   ranking_snapshots     │
-├─────────────────────────┤  ├─────────────────────────┤
-│ id          UUID    PK  │  │ id           BIGINT PK  │
-│ user_id     BIGINT  FK  │  │ user_id      BIGINT FK  │
-│ target      VARCHAR     │  │ period_type  ENUM       │
-│ custom_target VARCHAR   │  │ period_key   VARCHAR    │
-│ target_nickname VARCHAR │  │ total_points INTEGER    │
-│ anger_before INTEGER    │  │ total_sessions INTEGER  │
+│ id         BIGINT PK │──┬──────────────────┐
+│ external_id VARCHAR  │  │  (UNIQUE)        │
+│ nickname   VARCHAR   │  │                  │
+│ created_at TIMESTAMP │  │                  │
+│ updated_at TIMESTAMP │  │                  │
+└──────────────────────┘  │                  │
+                          │                  │
+         ┌────────────────┤                  │
+         │                │                  │
+         ▼                ▼                  ▼
+┌─────────────────────────┐  ┌─────────────────────────┐  ┌─────────────────────────┐
+│     game_sessions       │  │   ranking_snapshots     │  │     achievements        │
+├─────────────────────────┤  ├─────────────────────────┤  ├─────────────────────────┤
+│ id          UUID    PK  │  │ id           BIGINT PK  │  │ id               BIGINT │
+│ user_id     BIGINT  FK  │  │ user_id      BIGINT FK  │  │ user_id          BIGINT │
+│ target      VARCHAR     │  │ period_type  ENUM       │  │ achievement_type VARCHAR│
+│ custom_target VARCHAR   │  │ period_key   VARCHAR    │  │ achieved_at    TIMESTAMP│
+│ target_nickname VARCHAR │  │ total_points INTEGER    │  └─────────────────────────┘
+│ anger_before INTEGER    │  │ total_sessions INTEGER  │    UNIQUE(user_id, type)
 │ anger_after  INTEGER    │  │ total_hits   INTEGER    │
 │ hits        INTEGER     │  │ best_release INTEGER    │
 │ skill_shots INTEGER     │  │ avg_release  INTEGER    │
@@ -108,6 +108,25 @@ points = 10 + hits + (skillShots × 4) + floor((angerBefore - min(angerAfter, an
 | updated_at | TIMESTAMP | auto | 마지막 업데이트 |
 
 **JPA Entity:** `com.hwapulgi.api.ranking.entity.RankingSnapshot`
+
+---
+
+### achievements
+
+업적/배지 기록. 세션 생성 시 자동으로 14종 업적 달성 여부를 체크합니다.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | BIGINT | PK, AUTO_INCREMENT | 업적 ID |
+| user_id | BIGINT | FK → users, NOT NULL | 사용자 |
+| achievement_type | VARCHAR (ENUM) | NOT NULL | 업적 타입 (14종) |
+| achieved_at | TIMESTAMP | auto | 달성 시각 |
+
+**JPA Entity:** `com.hwapulgi.api.achievement.entity.Achievement`
+
+**Unique Constraint:** `(user_id, achievement_type)` — 중복 방지
+
+**업적 타입:** HITS_100, HITS_500, HITS_1000, SESSIONS_10, SESSIONS_50, SESSIONS_100, RELEASE_80, RELEASE_90, RELEASE_100, STREAK_3, STREAK_7, STREAK_30, POINTS_500, POINTS_1000
 
 ---
 

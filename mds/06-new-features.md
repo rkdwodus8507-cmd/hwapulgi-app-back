@@ -195,6 +195,93 @@ Response
 
 ---
 
+---
+
+## 4. 홈 대시보드 (2026-04-05 추가)
+
+### 개요
+
+홈 화면에 필요한 데이터를 한 번에 조회하는 스냅샷 API. 오늘 세션 수, 최근 해소율, 이번 주 주요 대상, 주간 통계를 포함합니다.
+
+### API
+
+**GET /api/v1/home/snapshot** — 홈 대시보드 데이터
+
+### 구현 파일
+
+```
+com.hwapulgi.api.home/
+├── controller/HomeController.java
+├── dto/HomeSnapshotResponse.java
+└── service/HomeService.java
+```
+
+---
+
+## 5. 주간 리포트 (2026-04-05 추가)
+
+### 개요
+
+이번 주 상세 리포트 (캘린더 뷰, 상위 대상, 가장 힘든 요일, 주간 헤드라인)와 지난 주 아카이브를 제공합니다.
+
+### API
+
+- **GET /api/v1/reports/weekly** — 이번 주 상세 리포트
+- **GET /api/v1/reports/archives** — 지난 주 리포트 아카이브 목록
+
+### 구현 파일
+
+```
+com.hwapulgi.api.report/
+├── controller/ReportController.java
+├── dto/WeeklySummaryResponse.java
+├── dto/WeeklyArchiveResponse.java
+└── service/ReportService.java
+```
+
+---
+
+## 6. 자동완성 API (2026-04-05 추가)
+
+### 개요
+
+세션 생성 시 대상/닉네임 입력을 편리하게 하기 위한 최근 사용 내역 자동완성.
+
+### API
+
+- **GET /api/v1/sessions/recent-targets** — 최근 커스텀 대상 (최대 6개)
+- **GET /api/v1/sessions/recent-nicknames** — 최근 닉네임 (최대 5개)
+
+---
+
+## 7. Docker 배포 환경 (2026-04-05 추가)
+
+### 개요
+
+Docker 기반 배포 환경 구성. multi-stage build로 이미지 경량화.
+
+### 구성 파일
+
+| 파일 | 용도 |
+|------|------|
+| `Dockerfile` | multi-stage build (JDK 21 빌드 → JRE 21 런타임) |
+| `docker-compose.yml` | 전체 스택 (app + PostgreSQL 16 + Redis 7) |
+| `docker-compose-infra.yml` | 로컬 개발용 인프라만 (PostgreSQL + Redis) |
+| `application-prod.properties` | 프로덕션 프로필 (env var override, ddl-auto=validate) |
+
+---
+
+## 8. Swagger/OpenAPI (2026-04-05 추가)
+
+### 개요
+
+springdoc-openapi를 통한 API 문서 자동 생성.
+
+- **Swagger UI:** `http://localhost:8080/swagger-ui.html`
+- **API Docs:** `http://localhost:8080/api-docs`
+
+---
+
 ## 코드 리뷰 이력
 
 ### 2026-04-05 — 신규 기능 코드 리뷰

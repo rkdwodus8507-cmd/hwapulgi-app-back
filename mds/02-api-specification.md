@@ -259,3 +259,224 @@ points = 10 + hits + (skillShots × 4) + floor((angerBefore - min(angerAfter, an
   }
 }
 ```
+
+---
+
+## Home API
+
+### GET /api/v1/home/snapshot
+
+홈 대시보드 스냅샷. 오늘 세션 수, 최근 해소율, 주간 통계를 한 번에 조회합니다.
+
+**Headers:** `Authorization` (필수)
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "todayCount": 2,
+    "latestReleasePercent": 65,
+    "latestTarget": "상사",
+    "primaryTarget": "회사",
+    "weeklySessions": 8,
+    "weeklyAverageRelease": 72
+  }
+}
+```
+
+| 필드 | 설명 |
+|------|------|
+| todayCount | 오늘 세션 수 |
+| latestReleasePercent | 가장 최근 세션 해소율 (0-100) |
+| latestTarget | 가장 최근 대상 ("-" if 없음) |
+| primaryTarget | 이번 주 가장 많이 선택한 대상 ("-" if 없음) |
+| weeklySessions | 이번 주 총 세션 수 |
+| weeklyAverageRelease | 이번 주 평균 해소율 (0-100) |
+
+---
+
+## Report API
+
+### GET /api/v1/reports/weekly
+
+이번 주 상세 리포트. 캘린더 뷰, 상위 대상, 가장 힘든 요일, 주간 헤드라인을 포함합니다.
+
+**Headers:** `Authorization` (필수)
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "label": "4월 2주차",
+    "totalSessions": 8,
+    "totalHits": 450,
+    "totalReleased": 380,
+    "averageBefore": 72,
+    "averageAfter": 35,
+    "averageRelease": 72,
+    "bestRelease": 95,
+    "hardestWeekday": "월요일",
+    "streakDays": 5,
+    "weeklyHeadline": "월요일에 회사 때문에 가장 힘들었어요.",
+    "topTargets": [
+      { "label": "회사", "count": 4 },
+      { "label": "상사", "count": 3 }
+    ],
+    "calendarDays": [
+      {
+        "dateKey": "2026-04-06",
+        "dayLabel": "월",
+        "dayNumber": 6,
+        "angerLevel": 85,
+        "sessions": [
+          {
+            "id": "550e8400-...",
+            "target": "회사",
+            "angerBefore": 80,
+            "angerAfter": 30,
+            "hits": 50,
+            "releasedPercent": 62,
+            "createdAt": "2026-04-06T12:00:00",
+            "memo": "화풀기 완료"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+---
+
+### GET /api/v1/reports/archives
+
+지난 주 리포트 아카이브 목록 (현재 주 제외).
+
+**Headers:** `Authorization` (필수)
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "2026-03-31",
+      "label": "3월 5주차",
+      "periodText": "3.31 - 4.6",
+      "totalSessions": 6,
+      "totalHits": 320,
+      "totalReleased": 210,
+      "averageBefore": 68,
+      "averageAfter": 40,
+      "averageRelease": 68,
+      "topTarget": "회사",
+      "hardestWeekday": "금요일"
+    }
+  ]
+}
+```
+
+---
+
+## Session API (추가 엔드포인트)
+
+### GET /api/v1/sessions/recent-targets
+
+최근 사용한 커스텀 대상 자동완성 (최대 6개).
+
+**Headers:** `Authorization` (필수)
+
+**Response (200):** `ApiResponse<List<String>>`
+
+---
+
+### GET /api/v1/sessions/recent-nicknames
+
+최근 사용한 닉네임 자동완성 (최대 5개).
+
+**Headers:** `Authorization` (필수)
+
+**Response (200):** `ApiResponse<List<String>>`
+
+---
+
+## Achievement API
+
+### GET /api/v1/achievements/me
+
+내 업적 목록 조회.
+
+**Headers:** `Authorization` (필수)
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "type": "HITS_100",
+      "title": "백 번의 주먹",
+      "description": "누적 100회 타격 달성",
+      "achievedAt": "2026-04-05T12:00:00"
+    }
+  ]
+}
+```
+
+---
+
+## Streak API
+
+### GET /api/v1/streaks/me
+
+내 연속 플레이 스트릭 조회.
+
+**Headers:** `Authorization` (필수)
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "currentStreak": 5,
+    "bestStreak": 12,
+    "totalPlayDays": 45
+  }
+}
+```
+
+---
+
+## Target Stats API
+
+### GET /api/v1/users/me/target-stats
+
+내 분노 대상별 통계.
+
+**Headers:** `Authorization` (필수)
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "target": "회사",
+      "sessionCount": 25,
+      "totalHits": 1250,
+      "avgRelease": 72.5
+    }
+  ]
+}
+```
+
+---
+
+## Swagger / OpenAPI
+
+Swagger UI에서 전체 API를 인터랙티브하게 확인할 수 있습니다.
+
+- **Swagger UI:** `http://localhost:8080/swagger-ui.html`
+- **API Docs (JSON):** `http://localhost:8080/api-docs`

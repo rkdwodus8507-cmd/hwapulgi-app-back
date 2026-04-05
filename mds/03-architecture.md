@@ -17,6 +17,10 @@ Client (토스 인앱 웹뷰)
 │    SessionController                         │
 │    UserController                            │
 │    RankingController                         │
+│    AchievementController                     │
+│    StreakController                           │
+│    HomeController                            │
+│    ReportController                          │
 │         │                                    │
 │  Auth Layer                                  │
 │    AuthService (interface)                   │
@@ -27,11 +31,16 @@ Client (토스 인앱 웹뷰)
 │    GameSessionService ──→ RankingService      │
 │    UserService            (Redis ZSet ops)   │
 │    PointsCalculator                          │
+│    AchievementService                        │
+│    StreakService                              │
+│    HomeService                               │
+│    ReportService                             │
 │         │                                    │
 │  Repository Layer (Spring Data JPA)          │
 │    GameSessionRepository                     │
 │    UserRepository                            │
 │    RankingSnapshotRepository                 │
+│    AchievementRepository                     │
 │         │                    │               │
 └─────────┼────────────────────┼───────────────┘
           ▼                    ▼
@@ -90,7 +99,8 @@ Client (토스 인앱 웹뷰)
 5. Service: GameSession 엔티티 생성 → DB 저장
 6. Service: RankingService.addPoints() → Redis ZINCRBY (3개 키)
 7. Service: RankingService.updateReleaseRate() → Redis (per-period best)
-8. Controller: ApiResponse.ok(response) → Client
+8. Service: StreakService → 스트릭 계산 + AchievementService → 업적 체크 (try-catch)
+9. Controller: ApiResponse.ok(response) → Client
 ```
 
 ### 랭킹 조회 흐름
@@ -122,6 +132,11 @@ Client (토스 인앱 웹뷰)
 | 랭킹 Redis 키 TTL | 주간 14일, 월간 62일 — 오래된 키 자동 정리 |
 | 해소율 랭킹 per-period best | 주간/월간/전체 각각 독립적으로 최고 기록 관리 |
 | embedded-redis를 testImplementation | 프로덕션 JAR에서 불필요한 바이너리 제거 |
+| Clock 주입 | LocalDate.now(clock) 사용으로 시간대 버그 방지 및 테스트 용이 |
+| 업적/스트릭 try-catch | 세션 저장은 항상 보장, 부가 기능 실패 시 로깅만 |
+| Docker multi-stage build | 빌드 환경(JDK)과 런타임(JRE) 분리로 이미지 경량화 |
+| springdoc-openapi | Swagger UI 자동 생성, API 문서와 코드 동기화 |
+| docker-compose-infra.yml 분리 | 로컬 개발 시 인프라만 띄우고 앱은 IDE에서 실행 가능 |
 
 ## 아키텍처 다이어그램
 
