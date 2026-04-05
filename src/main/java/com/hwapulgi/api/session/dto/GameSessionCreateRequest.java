@@ -10,12 +10,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class GameSessionCreateRequest {
 
-    @NotBlank
+    @NotBlank @Size(max = 20)
     private String target;
 
+    @Size(max = 50)
     private String customTarget;
 
-    @NotBlank
+    @NotBlank @Size(max = 50)
     private String targetNickname;
 
     @Min(0) @Max(100)
@@ -36,5 +37,6 @@ public class GameSessionCreateRequest {
     @Min(0)
     private int points;
 
+    @Size(max = 1000)
     private String memo;
 }

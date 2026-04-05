@@ -10,9 +10,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.Set;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -36,10 +39,17 @@ class SessionApiTest {
     @Autowired
     private GameSessionRepository gameSessionRepository;
 
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
     @BeforeEach
     void setUp() {
         gameSessionRepository.deleteAll();
         userRepository.deleteAll();
+        Set<String> keys = redisTemplate.keys("ranking:*");
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+        }
         userRepository.save(new User("1", "테스트유저"));
     }
 
@@ -60,7 +70,8 @@ class SessionApiTest {
 
         String sessionId = objectMapper.readTree(sessionJson).get("data").get("id").asText();
 
-        mockMvc.perform(get("/api/v1/sessions/" + sessionId))
+        mockMvc.perform(get("/api/v1/sessions/" + sessionId)
+                        .header("Authorization", "1:테스트유저"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.target").value("회사"));
     }

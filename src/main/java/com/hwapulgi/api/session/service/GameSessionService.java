@@ -74,18 +74,25 @@ public class GameSessionService {
                 .map(GameSessionResponse::from);
     }
 
-    public GameSessionResponse getSession(UUID sessionId) {
-        GameSession session = gameSessionRepository.findById(sessionId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.SESSION_NOT_FOUND));
+    public GameSessionResponse getSession(UUID sessionId, Long userId) {
+        GameSession session = findSessionWithOwnerCheck(sessionId, userId);
         return GameSessionResponse.from(session);
     }
 
     @Transactional
-    public GameSessionResponse updateAngerAfter(UUID sessionId, int angerAfter) {
-        GameSession session = gameSessionRepository.findById(sessionId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.SESSION_NOT_FOUND));
+    public GameSessionResponse updateAngerAfter(UUID sessionId, Long userId, int angerAfter) {
+        GameSession session = findSessionWithOwnerCheck(sessionId, userId);
         session.updateAngerAfter(angerAfter);
         return GameSessionResponse.from(session);
+    }
+
+    private GameSession findSessionWithOwnerCheck(UUID sessionId, Long userId) {
+        GameSession session = gameSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SESSION_NOT_FOUND));
+        if (!session.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        return session;
     }
 
     public UserStatsResponse getUserStats(Long userId, LocalDateTime from) {

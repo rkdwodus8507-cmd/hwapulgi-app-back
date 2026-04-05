@@ -46,14 +46,21 @@ public class GameSessionController {
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<GameSessionResponse> getSession(@PathVariable UUID id) {
-        return ApiResponse.ok(gameSessionService.getSession(id));
+    public ApiResponse<GameSessionResponse> getSession(
+            @RequestHeader(value = "Authorization", defaultValue = "") String token,
+            @PathVariable UUID id) {
+        UserInfo userInfo = authService.authenticate(token);
+        User user = userService.getOrCreateUser(userInfo.getUserId(), userInfo.getNickname());
+        return ApiResponse.ok(gameSessionService.getSession(id, user.getId()));
     }
 
     @PatchMapping("/{id}/anger-after")
     public ApiResponse<GameSessionResponse> updateAngerAfter(
+            @RequestHeader(value = "Authorization", defaultValue = "") String token,
             @PathVariable UUID id,
             @Valid @RequestBody AngerAfterUpdateRequest request) {
-        return ApiResponse.ok(gameSessionService.updateAngerAfter(id, request.getAngerAfter()));
+        UserInfo userInfo = authService.authenticate(token);
+        User user = userService.getOrCreateUser(userInfo.getUserId(), userInfo.getNickname());
+        return ApiResponse.ok(gameSessionService.updateAngerAfter(id, user.getId(), request.getAngerAfter()));
     }
 }

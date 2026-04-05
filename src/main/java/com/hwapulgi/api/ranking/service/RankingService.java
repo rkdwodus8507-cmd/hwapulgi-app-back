@@ -8,16 +8,21 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
+import com.hwapulgi.api.user.entity.User;
+
 import java.time.LocalDate;
+import java.time.Duration;
 import java.time.temporal.WeekFields;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class RankingService {
+
+    private static final Duration WEEKLY_TTL = Duration.ofDays(14);
+    private static final Duration MONTHLY_TTL = Duration.ofDays(62);
 
     private final StringRedisTemplate redisTemplate;
     private final UserRepository userRepository;
@@ -32,15 +37,31 @@ public class RankingService {
         ops.incrementScore(weeklyKey, member, points);
         ops.incrementScore(monthlyKey, member, points);
         ops.incrementScore(allTimeKey, member, points);
+
+        setTtlIfAbsent(weeklyKey, WEEKLY_TTL);
+        setTtlIfAbsent(monthlyKey, MONTHLY_TTL);
     }
 
     public void updateReleaseRate(Long userId, int releasePercent) {
         ZSetOperations<String, String> ops = redisTemplate.opsForZSet();
         String member = String.valueOf(userId);
 
-        updateIfHigher(ops, buildKey("release", "weekly", currentWeekKey()), member, releasePercent);
-        updateIfHigher(ops, buildKey("release", "monthly", currentMonthKey()), member, releasePercent);
+        String weeklyKey = buildKey("release", "weekly", currentWeekKey());
+        String monthlyKey = buildKey("release", "monthly", currentMonthKey());
+
+        updateIfHigher(ops, weeklyKey, member, releasePercent);
+        updateIfHigher(ops, monthlyKey, member, releasePercent);
         updateIfHigher(ops, buildKey("release", "all_time", "all"), member, releasePercent);
+
+        setTtlIfAbsent(weeklyKey, WEEKLY_TTL);
+        setTtlIfAbsent(monthlyKey, MONTHLY_TTL);
+    }
+
+    private void setTtlIfAbsent(String key, Duration ttl) {
+        Long currentTtl = redisTemplate.getExpire(key);
+        if (currentTtl != null && currentTtl == -1) {
+            redisTemplate.expire(key, ttl);
+        }
     }
 
     private void updateIfHigher(ZSetOperations<String, String> ops, String key, String member, int score) {
@@ -57,16 +78,23 @@ public class RankingService {
         Set<ZSetOperations.TypedTuple<String>> tuples =
                 redisTemplate.opsForZSet().reverseRangeWithScores(key, 0, limit - 1);
 
+        if (tuples == null || tuples.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> userIds = tuples.stream()
+                .map(t -> Long.parseLong(t.getValue()))
+                .toList();
+
+        Map<Long, String> nicknameMap = userRepository.findAllById(userIds).stream()
+                .collect(Collectors.toMap(User::getId, User::getNickname));
+
         List<RankingEntryResponse> result = new ArrayList<>();
         int rank = 1;
-        if (tuples != null) {
-            for (ZSetOperations.TypedTuple<String> tuple : tuples) {
-                Long userId = Long.parseLong(tuple.getValue());
-                String nickname = userRepository.findById(userId)
-                        .map(u -> u.getNickname())
-                        .orElse("알 수 없음");
-                result.add(new RankingEntryResponse(rank++, userId, nickname, tuple.getScore()));
-            }
+        for (ZSetOperations.TypedTuple<String> tuple : tuples) {
+            Long userId = Long.parseLong(tuple.getValue());
+            String nickname = nicknameMap.getOrDefault(userId, "알 수 없음");
+            result.add(new RankingEntryResponse(rank++, userId, nickname, tuple.getScore()));
         }
         return result;
     }

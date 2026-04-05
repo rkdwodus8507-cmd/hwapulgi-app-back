@@ -71,7 +71,7 @@ class GameSessionServiceTest {
         UUID id = UUID.randomUUID();
         given(gameSessionRepository.findById(id)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> gameSessionService.getSession(id))
+        assertThatThrownBy(() -> gameSessionService.getSession(id, 1L))
                 .isInstanceOf(BusinessException.class);
     }
 }
