@@ -1,8 +1,10 @@
 package com.hwapulgi.api.session.service;
 
+import com.hwapulgi.api.achievement.service.AchievementService;
 import com.hwapulgi.api.common.exception.BusinessException;
 import com.hwapulgi.api.common.exception.ErrorCode;
 import com.hwapulgi.api.ranking.service.RankingService;
+import com.hwapulgi.api.streak.service.StreakService;
 import com.hwapulgi.api.session.dto.GameSessionCreateRequest;
 import com.hwapulgi.api.session.dto.GameSessionResponse;
 import com.hwapulgi.api.session.dto.TargetStatsResponse;
@@ -31,6 +33,8 @@ public class GameSessionService {
     private final GameSessionRepository gameSessionRepository;
     private final UserService userService;
     private final RankingService rankingService;
+    private final AchievementService achievementService;
+    private final StreakService streakService;
 
     @Transactional
     public GameSessionResponse createSession(Long userId, GameSessionCreateRequest request) {
@@ -65,6 +69,13 @@ public class GameSessionService {
             rankingService.updateReleaseRate(userId, response.getReleasedPercent());
         } catch (Exception e) {
             log.error("Failed to update ranking for userId={}: {}", userId, e.getMessage());
+        }
+
+        try {
+            int currentStreak = streakService.getCurrentStreak(userId);
+            achievementService.checkAndAward(userId, currentStreak);
+        } catch (Exception e) {
+            log.error("Failed to check achievements for userId={}: {}", userId, e.getMessage());
         }
 
         return response;
