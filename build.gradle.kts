@@ -22,6 +22,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
 	testImplementation("com.github.codemonstur:embedded-redis:1.4.3") { exclude(group = "org.slf4j") }
 	compileOnly("org.projectlombok:lombok")
 	runtimeOnly("com.h2database:h2")
