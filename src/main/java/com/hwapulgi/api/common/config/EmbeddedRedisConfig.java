@@ -18,18 +18,22 @@ public class EmbeddedRedisConfig {
 
     @PostConstruct
     public void start() {
-        redisServer = new RedisServer(redisPort);
         try {
+            redisServer = new RedisServer(redisPort);
             redisServer.start();
         } catch (Exception e) {
-            // port already in use — skip
+            // port already in use or startup failure — skip
         }
     }
 
     @PreDestroy
     public void stop() {
-        if (redisServer != null && redisServer.isActive()) {
-            redisServer.stop();
+        try {
+            if (redisServer != null && redisServer.isActive()) {
+                redisServer.stop();
+            }
+        } catch (Exception e) {
+            // ignore shutdown errors
         }
     }
 }
