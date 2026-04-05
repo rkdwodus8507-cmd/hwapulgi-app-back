@@ -51,5 +51,6 @@ public class WeeklySummaryResponse {
         private final int hits;
         private final int releasedPercent;
         private final String createdAt;
+        private final String memo;
     }
 }

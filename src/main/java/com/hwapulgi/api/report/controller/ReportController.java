@@ -3,6 +3,7 @@ package com.hwapulgi.api.report.controller;
 import com.hwapulgi.api.auth.dto.UserInfo;
 import com.hwapulgi.api.auth.service.AuthService;
 import com.hwapulgi.api.common.response.ApiResponse;
+import com.hwapulgi.api.report.dto.WeeklyArchiveResponse;
 import com.hwapulgi.api.report.dto.WeeklySummaryResponse;
 import com.hwapulgi.api.report.service.ReportService;
 import com.hwapulgi.api.user.entity.User;
@@ -11,6 +12,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "Report", description = "주간 리포트")
 @RestController
@@ -29,5 +32,14 @@ public class ReportController {
         UserInfo userInfo = authService.authenticate(token);
         User user = userService.getOrCreateUser(userInfo.getUserId(), userInfo.getNickname());
         return ApiResponse.ok(reportService.getWeeklySummary(user.getId()));
+    }
+
+    @Operation(summary = "지난 주간 아카이브", description = "현재 주를 제외한 과거 주차별 요약 리스트")
+    @GetMapping("/archives")
+    public ApiResponse<List<WeeklyArchiveResponse>> getWeeklyArchives(
+            @RequestHeader(value = "Authorization", defaultValue = "") String token) {
+        UserInfo userInfo = authService.authenticate(token);
+        User user = userService.getOrCreateUser(userInfo.getUserId(), userInfo.getNickname());
+        return ApiResponse.ok(reportService.getWeeklyArchives(user.getId()));
     }
 }

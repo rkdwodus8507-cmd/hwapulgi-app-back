@@ -1,5 +1,6 @@
 package com.hwapulgi.api.report.service;
 
+import com.hwapulgi.api.report.dto.WeeklyArchiveResponse;
 import com.hwapulgi.api.report.dto.WeeklySummaryResponse;
 import com.hwapulgi.api.report.dto.WeeklySummaryResponse.CalendarDay;
 import com.hwapulgi.api.report.dto.WeeklySummaryResponse.SessionSummary;
@@ -30,6 +31,55 @@ public class ReportService {
     public WeeklySummaryResponse getWeeklySummary(Long userId) {
         LocalDate today = LocalDate.now(clock);
         return buildWeeklySummary(userId, today);
+    }
+
+    public List<WeeklyArchiveResponse> getWeeklyArchives(Long userId) {
+        LocalDate today = LocalDate.now(clock);
+        LocalDate currentWeekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+
+        List<GameSession> allSessions = gameSessionRepository.findByUserIdOrderByCreatedAtDesc(userId);
+
+        Map<LocalDate, List<GameSession>> grouped = allSessions.stream()
+                .collect(Collectors.groupingBy(s ->
+                        s.getCreatedAt().toLocalDate().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))));
+
+        return grouped.entrySet().stream()
+                .filter(e -> e.getKey().isBefore(currentWeekStart))
+                .sorted(Comparator.<Map.Entry<LocalDate, List<GameSession>>, LocalDate>comparing(Map.Entry::getKey).reversed())
+                .map(e -> buildArchive(e.getKey(), e.getValue()))
+                .toList();
+    }
+
+    private WeeklyArchiveResponse buildArchive(LocalDate weekStart, List<GameSession> sessions) {
+        LocalDate weekEnd = weekStart.plusDays(6);
+        int totalSessions = sessions.size();
+        int totalHits = sessions.stream().mapToInt(GameSession::getHits).sum();
+        int totalReleased = sessions.stream()
+                .mapToInt(s -> Math.max(0, s.getAngerBefore() - s.getAngerAfter())).sum();
+        int totalBefore = sessions.stream().mapToInt(GameSession::getAngerBefore).sum();
+        int totalAfter = sessions.stream().mapToInt(GameSession::getAngerAfter).sum();
+        int averageRelease = (int) sessions.stream().mapToInt(GameSession::getReleasedPercent).average().orElse(0);
+
+        List<TopTarget> topTargets = buildTopTargets(sessions);
+        String topTarget = topTargets.isEmpty() ? "-" : topTargets.get(0).getLabel();
+        String hardestWeekday = findHardestWeekday(sessions);
+
+        String periodText = weekStart.getMonthValue() + "." + weekStart.getDayOfMonth()
+                + " - " + weekEnd.getMonthValue() + "." + weekEnd.getDayOfMonth();
+
+        return WeeklyArchiveResponse.builder()
+                .id(weekStart.format(DATE_KEY_FORMAT))
+                .label(buildWeekLabel(weekStart))
+                .periodText(periodText)
+                .totalSessions(totalSessions)
+                .totalHits(totalHits)
+                .totalReleased(totalReleased)
+                .averageBefore(Math.round((float) totalBefore / totalSessions))
+                .averageAfter(Math.round((float) totalAfter / totalSessions))
+                .averageRelease(averageRelease)
+                .topTarget(topTarget)
+                .hardestWeekday(hardestWeekday)
+                .build();
     }
 
     private WeeklySummaryResponse buildWeeklySummary(Long userId, LocalDate referenceDate) {
@@ -136,7 +186,8 @@ public class ReportService {
                             s.getId().toString(), formatLabel(s),
                             s.getAngerBefore(), s.getAngerAfter(),
                             s.getHits(), s.getReleasedPercent(),
-                            s.getCreatedAt().toString()))
+                            s.getCreatedAt().toString(),
+                            s.getMemo()))
                     .toList();
 
             days.add(new CalendarDay(

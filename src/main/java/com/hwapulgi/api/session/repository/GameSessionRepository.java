@@ -18,6 +18,8 @@ public interface GameSessionRepository extends JpaRepository<GameSession, UUID> 
     @Query("SELECT gs FROM GameSession gs WHERE gs.user.id = :userId AND gs.createdAt >= :from")
     List<GameSession> findByUserIdAndCreatedAtAfter(@Param("userId") Long userId, @Param("from") LocalDateTime from);
 
+    List<GameSession> findByUserIdOrderByCreatedAtDesc(Long userId);
+
     Optional<GameSession> findFirstByUserIdOrderByCreatedAtDesc(Long userId);
 
     long countByUserIdAndCreatedAtBetween(Long userId, LocalDateTime from, LocalDateTime to);

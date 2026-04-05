@@ -91,4 +91,13 @@ class ReportApiTest {
                 .andExpect(jsonPath("$.data.calendarDays").isArray())
                 .andExpect(jsonPath("$.data.label").isString());
     }
+
+    @Test
+    void getWeeklyArchives_noSessions_returnsEmptyList() throws Exception {
+        mockMvc.perform(get("/api/v1/reports/archives")
+                        .header("Authorization", "1:테스트유저"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data.length()").value(0));
+    }
 }
