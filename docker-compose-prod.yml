@@ -2,8 +2,8 @@ services:
   app:
     build: .
     restart: on-failure
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
@@ -28,5 +28,20 @@ services:
       timeout: 3s
       retries: 5
 
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
 volumes:
   redisdata:
+  caddy_data:
+  caddy_config:
