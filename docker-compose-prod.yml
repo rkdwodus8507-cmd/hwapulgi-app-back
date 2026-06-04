@@ -4,9 +4,13 @@ services:
     restart: on-failure
     expose:
       - "8080"
+    volumes:
+      - ./src/main/resources/certs:/app/certs:ro
     environment:
       JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--Xms256m -Xmx512m}
       SPRING_PROFILES_ACTIVE: prod
+      APPINTOSS_MTLS_CERT: file:/app/certs/client.crt
+      APPINTOSS_MTLS_KEY: file:/app/certs/client.key
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
