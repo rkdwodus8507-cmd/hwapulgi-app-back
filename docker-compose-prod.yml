@@ -1,6 +1,6 @@
 services:
   app:
-    build: .
+    image: ghcr.io/rkdwodus8507-cmd/hwapulgi-app-back:latest
     restart: on-failure
     expose:
       - "8080"
