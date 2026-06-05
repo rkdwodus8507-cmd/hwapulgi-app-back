@@ -48,7 +48,7 @@ public class RankingController {
             @RequestParam(defaultValue = "points") String criteria,
             @RequestParam(defaultValue = "weekly") String period) {
         UserInfo userInfo = authService.authenticate(token);
-        User user = userService.getOrCreateUser(userInfo.userId(), userInfo.nickname());
+        User user = userService.findById(userInfo.userId());
         return ApiResponse.ok(rankingService.getMyRanking(user.getId(), criteria, period));
     }
 }

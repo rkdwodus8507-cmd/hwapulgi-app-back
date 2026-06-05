@@ -29,7 +29,7 @@ public class AchievementController {
     public ApiResponse<List<AchievementResponse>> getMyAchievements(
             @RequestHeader(value = "Authorization", defaultValue = "") String token) {
         UserInfo userInfo = authService.authenticate(token);
-        User user = userService.getOrCreateUser(userInfo.userId(), userInfo.nickname());
+        User user = userService.findById(userInfo.userId());
         return ApiResponse.ok(achievementService.getMyAchievements(user.getId()));
     }
 }
