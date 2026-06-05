@@ -2,6 +2,7 @@ package com.hwapulgi.api.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hwapulgi.api.achievement.repository.AchievementRepository;
+import com.hwapulgi.api.integration.support.AuthTokenFixture;
 import com.hwapulgi.api.session.dto.GameSessionCreateRequest;
 import com.hwapulgi.api.session.repository.GameSessionRepository;
 import com.hwapulgi.api.user.entity.User;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -26,25 +28,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("local")
+@Import(AuthTokenFixture.class)
 class ReportApiTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private ObjectMapper objectMapper;
+    @Autowired private UserRepository userRepository;
+    @Autowired private GameSessionRepository gameSessionRepository;
+    @Autowired private AchievementRepository achievementRepository;
+    @Autowired private StringRedisTemplate redisTemplate;
+    @Autowired private AuthTokenFixture authTokens;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private GameSessionRepository gameSessionRepository;
-
-    @Autowired
-    private AchievementRepository achievementRepository;
-
-    @Autowired
-    private StringRedisTemplate redisTemplate;
+    private User testUser;
 
     @BeforeEach
     void setUp() {
@@ -55,13 +50,13 @@ class ReportApiTest {
         if (keys != null && !keys.isEmpty()) {
             redisTemplate.delete(keys);
         }
-        userRepository.save(new User("1", "테스트유저"));
+        testUser = userRepository.save(User.tossUser("1", "테스트유저"));
     }
 
     @Test
     void getWeeklySummary_noSessions_returnsEmpty() throws Exception {
         mockMvc.perform(get("/api/v1/reports/weekly")
-                        .header("Authorization", "1:테스트유저"))
+                        .header("Authorization", authTokens.bearerForUser(testUser)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.totalSessions").value(0))
                 .andExpect(jsonPath("$.data.weeklyHeadline").value("이번 주 감정 기록을 시작해보세요."))
@@ -74,14 +69,16 @@ class ReportApiTest {
         GameSessionCreateRequest request = new GameSessionCreateRequest(
                 "회사", null, "상사", 80, 30, 50, 5, 62, 105, null);
 
+        String bearer = authTokens.bearerForUser(testUser);
+
         mockMvc.perform(post("/api/v1/sessions")
-                        .header("Authorization", "1:테스트유저")
+                        .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/v1/reports/weekly")
-                        .header("Authorization", "1:테스트유저"))
+                        .header("Authorization", bearer))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.totalSessions").value(1))
                 .andExpect(jsonPath("$.data.totalHits").value(50))
@@ -95,7 +92,7 @@ class ReportApiTest {
     @Test
     void getWeeklyArchives_noSessions_returnsEmptyList() throws Exception {
         mockMvc.perform(get("/api/v1/reports/archives")
-                        .header("Authorization", "1:테스트유저"))
+                        .header("Authorization", authTokens.bearerForUser(testUser)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data.length()").value(0));

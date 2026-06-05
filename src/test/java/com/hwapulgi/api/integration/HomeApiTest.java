@@ -2,6 +2,7 @@ package com.hwapulgi.api.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hwapulgi.api.achievement.repository.AchievementRepository;
+import com.hwapulgi.api.integration.support.AuthTokenFixture;
 import com.hwapulgi.api.session.dto.GameSessionCreateRequest;
 import com.hwapulgi.api.session.repository.GameSessionRepository;
 import com.hwapulgi.api.user.entity.User;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -26,25 +28,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("local")
+@Import(AuthTokenFixture.class)
 class HomeApiTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private ObjectMapper objectMapper;
+    @Autowired private UserRepository userRepository;
+    @Autowired private GameSessionRepository gameSessionRepository;
+    @Autowired private AchievementRepository achievementRepository;
+    @Autowired private StringRedisTemplate redisTemplate;
+    @Autowired private AuthTokenFixture authTokens;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private GameSessionRepository gameSessionRepository;
-
-    @Autowired
-    private AchievementRepository achievementRepository;
-
-    @Autowired
-    private StringRedisTemplate redisTemplate;
+    private User testUser;
 
     @BeforeEach
     void setUp() {
@@ -55,13 +50,13 @@ class HomeApiTest {
         if (keys != null && !keys.isEmpty()) {
             redisTemplate.delete(keys);
         }
-        userRepository.save(new User("1", "테스트유저"));
+        testUser = userRepository.save(User.tossUser("1", "테스트유저"));
     }
 
     @Test
     void getSnapshot_noSessions_returnsDefaults() throws Exception {
         mockMvc.perform(get("/api/v1/home/snapshot")
-                        .header("Authorization", "1:테스트유저"))
+                        .header("Authorization", authTokens.bearerForUser(testUser)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.todayCount").value(0))
                 .andExpect(jsonPath("$.data.latestReleasePercent").value(0))
@@ -77,14 +72,16 @@ class HomeApiTest {
         GameSessionCreateRequest request = new GameSessionCreateRequest(
                 "회사", null, "상사", 80, 30, 50, 5, 62, 105, "테스트 메모");
 
+        String bearer = authTokens.bearerForUser(testUser);
+
         mockMvc.perform(post("/api/v1/sessions")
-                        .header("Authorization", "1:테스트유저")
+                        .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/v1/home/snapshot")
-                        .header("Authorization", "1:테스트유저"))
+                        .header("Authorization", bearer))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.todayCount").value(1))
                 .andExpect(jsonPath("$.data.latestReleasePercent").value(62))

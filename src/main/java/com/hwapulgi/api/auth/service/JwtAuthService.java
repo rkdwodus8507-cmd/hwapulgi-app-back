@@ -6,12 +6,10 @@ import com.hwapulgi.api.auth.jwt.JwtTokenProvider;
 import com.hwapulgi.api.common.exception.BusinessException;
 import com.hwapulgi.api.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 @Service
-@Primary
 @Profile({"local", "dev", "prod"})
 @RequiredArgsConstructor
 public class JwtAuthService implements AuthService {
