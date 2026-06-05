@@ -6,6 +6,7 @@ import com.hwapulgi.api.common.response.ApiResponse;
 import com.hwapulgi.api.session.dto.AngerAfterUpdateRequest;
 import com.hwapulgi.api.session.dto.GameSessionCreateRequest;
 import com.hwapulgi.api.session.dto.GameSessionResponse;
+import com.hwapulgi.api.session.dto.MemoUpdateRequest;
 import com.hwapulgi.api.session.service.GameSessionService;
 import com.hwapulgi.api.user.entity.User;
 import com.hwapulgi.api.user.service.UserService;
@@ -70,6 +71,17 @@ public class GameSessionController {
         UserInfo userInfo = authService.authenticate(token);
         User user = userService.findById(userInfo.userId());
         return ApiResponse.ok(gameSessionService.updateAngerAfter(id, user.getId(), request.getAngerAfter()));
+    }
+
+    @Operation(summary = "메모 수정", description = "세션 메모를 수정합니다.")
+    @PatchMapping("/{id}/memo")
+    public ApiResponse<GameSessionResponse> updateMemo(
+            @RequestHeader(value = "Authorization", defaultValue = "") String token,
+            @PathVariable UUID id,
+            @Valid @RequestBody MemoUpdateRequest request) {
+        UserInfo userInfo = authService.authenticate(token);
+        User user = userService.findById(userInfo.userId());
+        return ApiResponse.ok(gameSessionService.updateMemo(id, user.getId(), request.getMemo()));
     }
 
     @Operation(summary = "최근 사용한 대상 목록", description = "자동완성용 최근 커스텀 대상 (최대 6개)")
