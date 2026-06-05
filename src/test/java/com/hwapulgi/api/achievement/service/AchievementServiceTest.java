@@ -31,7 +31,7 @@ class AchievementServiceTest {
 
     @Test
     void checkAndAward_hitsThreshold_awardsAchievement() {
-        User user = new User("1", "테스트");
+        User user = User.tossUser("1", "테스트");
         given(userService.findById(1L)).willReturn(user);
 
         GameSession session = GameSession.builder()
@@ -54,7 +54,7 @@ class AchievementServiceTest {
 
     @Test
     void checkAndAward_alreadyHas_skips() {
-        User user = new User("1", "테스트");
+        User user = User.tossUser("1", "테스트");
         given(userService.findById(1L)).willReturn(user);
 
         GameSession session = GameSession.builder()

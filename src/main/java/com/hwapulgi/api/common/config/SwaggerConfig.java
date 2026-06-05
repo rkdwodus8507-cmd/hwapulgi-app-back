@@ -19,8 +19,8 @@ public class SwaggerConfig {
                 .info(new Info()
                         .title("Hwapulgi API")
                         .description("화풀기 — 분노 해소 게임 앱 백엔드 API\n\n"
-                                + "인증: Authorization 헤더에 `userId:nickname` 형식으로 전달 (local/dev)\n\n"
-                                + "예시: `1:테스트유저`")
+                                + "인증: Authorization 헤더에 `Bearer <JWT>` 형식으로 전달.\n"
+                                + "JWT는 `POST /api/auth/guest/login` 또는 토스 로그인으로 발급.")
                         .version("1.0.0"))
                 .addSecurityItem(new SecurityRequirement().addList(authHeader))
                 .components(new Components()
@@ -28,6 +28,6 @@ public class SwaggerConfig {
                                 .name(authHeader)
                                 .type(SecurityScheme.Type.APIKEY)
                                 .in(SecurityScheme.In.HEADER)
-                                .description("userId:nickname (예: 1:테스트유저)")));
+                                .description("Bearer <JWT> (POST /api/auth/guest/login 으로 발급)")));
     }
 }

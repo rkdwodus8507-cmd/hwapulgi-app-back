@@ -27,7 +27,7 @@ class UserServiceTest {
 
     @Test
     void getOrCreateUser_existingUser_returnsUser() {
-        User existing = new User("1", "기존유저");
+        User existing = User.tossUser("1", "기존유저");
         given(userRepository.findByExternalId("1")).willReturn(Optional.of(existing));
 
         User result = userService.getOrCreateUser(1L, "기존유저");
@@ -38,7 +38,7 @@ class UserServiceTest {
     @Test
     void getOrCreateUser_newUser_createsAndReturns() {
         given(userRepository.findByExternalId("2")).willReturn(Optional.empty());
-        User newUser = new User("2", "새유저");
+        User newUser = User.tossUser("2", "새유저");
         given(userRepository.saveAndFlush(any(User.class))).willReturn(newUser);
 
         User result = userService.getOrCreateUser(2L, "새유저");

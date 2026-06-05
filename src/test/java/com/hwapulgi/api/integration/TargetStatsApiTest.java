@@ -1,9 +1,10 @@
 package com.hwapulgi.api.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hwapulgi.api.achievement.repository.AchievementRepository;
+import com.hwapulgi.api.integration.support.AuthTokenFixture;
 import com.hwapulgi.api.session.dto.GameSessionCreateRequest;
 import com.hwapulgi.api.session.repository.GameSessionRepository;
-import com.hwapulgi.api.achievement.repository.AchievementRepository;
 import com.hwapulgi.api.user.entity.User;
 import com.hwapulgi.api.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -26,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("local")
+@Import(AuthTokenFixture.class)
 class TargetStatsApiTest {
 
     @Autowired private MockMvc mockMvc;
@@ -34,6 +37,9 @@ class TargetStatsApiTest {
     @Autowired private GameSessionRepository gameSessionRepository;
     @Autowired private AchievementRepository achievementRepository;
     @Autowired private StringRedisTemplate redisTemplate;
+    @Autowired private AuthTokenFixture authTokens;
+
+    private User testUser;
 
     @BeforeEach
     void setUp() {
@@ -42,7 +48,7 @@ class TargetStatsApiTest {
         userRepository.deleteAll();
         Set<String> keys = redisTemplate.keys("ranking:*");
         if (keys != null && !keys.isEmpty()) redisTemplate.delete(keys);
-        userRepository.save(new User("1", "테스트유저"));
+        testUser = userRepository.save(User.tossUser("1", "테스트유저"));
     }
 
     @Test
@@ -51,18 +57,20 @@ class TargetStatsApiTest {
         GameSessionCreateRequest req = new GameSessionCreateRequest(
                 "회사", null, "상사", 80, 30, 50, 5, 62, 105, null);
 
+        String bearer = authTokens.bearerForUser(testUser);
+
         mockMvc.perform(post("/api/v1/sessions")
-                .header("Authorization", "1:테스트유저")
+                .header("Authorization", bearer)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)));
 
         mockMvc.perform(post("/api/v1/sessions")
-                .header("Authorization", "1:테스트유저")
+                .header("Authorization", bearer)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)));
 
         mockMvc.perform(get("/api/v1/users/me/target-stats")
-                        .header("Authorization", "1:테스트유저"))
+                        .header("Authorization", bearer))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].target").value("회사"))

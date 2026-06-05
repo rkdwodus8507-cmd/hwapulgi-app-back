@@ -1,6 +1,6 @@
 package com.hwapulgi.api.auth.dto;
 
-public record TossLoginResponse(
+public record GuestLoginResponse(
         Long userId,
         String nickname,
         String accessToken,

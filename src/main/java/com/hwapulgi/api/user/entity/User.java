@@ -17,11 +17,14 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = true, unique = true)
     private String externalId;
 
     @Column(nullable = false)
     private String nickname;
+
+    @Column(unique = true, nullable = true)
+    private String deviceId;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -29,9 +32,18 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    public User(String externalId, String nickname) {
-        this.externalId = externalId;
-        this.nickname = nickname;
+    public static User guest(String deviceId, String nickname) {
+        User u = new User();
+        u.deviceId = deviceId;
+        u.nickname = nickname;
+        return u;
+    }
+
+    public static User tossUser(String externalId, String nickname) {
+        User u = new User();
+        u.externalId = externalId;
+        u.nickname = nickname;
+        return u;
     }
 
     public void updateNickname(String nickname) {

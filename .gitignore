@@ -38,3 +38,6 @@ out/
 
 ### mTLS Certificates ###
 src/main/resources/certs/
+
+### Worktrees ###
+.worktrees/

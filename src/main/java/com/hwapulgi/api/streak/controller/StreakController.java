@@ -27,7 +27,7 @@ public class StreakController {
     public ApiResponse<StreakResponse> getMyStreak(
             @RequestHeader(value = "Authorization", defaultValue = "") String token) {
         UserInfo userInfo = authService.authenticate(token);
-        User user = userService.getOrCreateUser(userInfo.getUserId(), userInfo.getNickname());
+        User user = userService.getOrCreateUser(userInfo.userId(), userInfo.nickname());
         return ApiResponse.ok(streakService.getStreak(user.getId()));
     }
 }
