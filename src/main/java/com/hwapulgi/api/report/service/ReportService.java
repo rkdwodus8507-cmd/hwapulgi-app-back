@@ -33,6 +33,17 @@ public class ReportService {
         return buildWeeklySummary(userId, today);
     }
 
+    public WeeklySummaryResponse getWeeklySummaryByKey(Long userId, String weekKey) {
+        LocalDate weekStart;
+        try {
+            weekStart = LocalDate.parse(weekKey, DATE_KEY_FORMAT);
+        } catch (java.time.format.DateTimeParseException e) {
+            throw new com.hwapulgi.api.common.exception.BusinessException(
+                    com.hwapulgi.api.common.exception.ErrorCode.INVALID_INPUT);
+        }
+        return buildWeeklySummary(userId, weekStart);
+    }
+
     public List<WeeklyArchiveResponse> getWeeklyArchives(Long userId) {
         LocalDate today = LocalDate.now(clock);
         LocalDate currentWeekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));

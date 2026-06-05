@@ -97,4 +97,24 @@ class ReportApiTest {
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data.length()").value(0));
     }
+
+    @Test
+    void getWeeklySummary_byWeekKey_returnsThatWeekSummary() throws Exception {
+        mockMvc.perform(get("/api/v1/reports/weekly")
+                        .param("weekKey", "2025-01-06")
+                        .header("Authorization", authTokens.bearerForUser(testUser)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalSessions").value(0))
+                .andExpect(jsonPath("$.data.label").isString())
+                .andExpect(jsonPath("$.data.calendarDays").isArray())
+                .andExpect(jsonPath("$.data.calendarDays.length()").value(7));
+    }
+
+    @Test
+    void getWeeklySummary_byInvalidWeekKey_returns400() throws Exception {
+        mockMvc.perform(get("/api/v1/reports/weekly")
+                        .param("weekKey", "not-a-date")
+                        .header("Authorization", authTokens.bearerForUser(testUser)))
+                .andExpect(status().isBadRequest());
+    }
 }

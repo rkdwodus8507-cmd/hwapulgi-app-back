@@ -25,13 +25,17 @@ public class ReportController {
     private final AuthService authService;
     private final UserService userService;
 
-    @Operation(summary = "이번 주 리포트", description = "캘린더, 대상 TOP3, 가장 힘든 요일, 주간 헤드라인 등 상세 리포트")
+    @Operation(summary = "주간 리포트", description = "캘린더, 대상 TOP3, 가장 힘든 요일, 주간 헤드라인 등 상세 리포트. weekKey 파라미터(yyyy-MM-dd 형식의 월요일 날짜)로 과거 주차 조회 가능, 미지정 시 이번 주 반환.")
     @GetMapping("/weekly")
     public ApiResponse<WeeklySummaryResponse> getWeeklySummary(
-            @RequestHeader(value = "Authorization", defaultValue = "") String token) {
+            @RequestHeader(value = "Authorization", defaultValue = "") String token,
+            @RequestParam(required = false) String weekKey) {
         UserInfo userInfo = authService.authenticate(token);
         User user = userService.findById(userInfo.userId());
-        return ApiResponse.ok(reportService.getWeeklySummary(user.getId()));
+        WeeklySummaryResponse response = weekKey == null
+                ? reportService.getWeeklySummary(user.getId())
+                : reportService.getWeeklySummaryByKey(user.getId(), weekKey);
+        return ApiResponse.ok(response);
     }
 
     @Operation(summary = "지난 주간 아카이브", description = "현재 주를 제외한 과거 주차별 요약 리스트")
