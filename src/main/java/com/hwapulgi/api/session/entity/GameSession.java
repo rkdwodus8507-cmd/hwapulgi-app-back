@@ -80,4 +80,8 @@ public class GameSession {
             this.releasedPercent = Math.max(0, calculated);
         }
     }
+
+    public void updateMemo(String memo) {
+        this.memo = memo;
+    }
 }

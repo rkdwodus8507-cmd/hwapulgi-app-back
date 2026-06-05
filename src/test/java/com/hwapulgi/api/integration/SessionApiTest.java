@@ -131,4 +131,27 @@ class SessionApiTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
     }
+
+    @Test
+    void updateMemo_modifiesSessionMemo() throws Exception {
+        GameSessionCreateRequest request = new GameSessionCreateRequest(
+                "회사", null, "상사", 80, 30, 50, 5, 62, 105, "기존 메모");
+
+        String sessionJson = mockMvc.perform(post("/api/v1/sessions")
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        String sessionId = objectMapper.readTree(sessionJson).get("data").get("id").asText();
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .patch("/api/v1/sessions/" + sessionId + "/memo")
+                        .header("Authorization", bearer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"memo\":\"수정된 메모\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.memo").value("수정된 메모"));
+    }
 }

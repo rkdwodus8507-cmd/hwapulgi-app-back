@@ -99,6 +99,13 @@ public class GameSessionService {
         return GameSessionResponse.from(session);
     }
 
+    @Transactional
+    public GameSessionResponse updateMemo(UUID sessionId, Long userId, String memo) {
+        GameSession session = findSessionWithOwnerCheck(sessionId, userId);
+        session.updateMemo(memo);
+        return GameSessionResponse.from(session);
+    }
+
     private GameSession findSessionWithOwnerCheck(UUID sessionId, Long userId) {
         GameSession session = gameSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SESSION_NOT_FOUND));
