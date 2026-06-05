@@ -32,12 +32,6 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @Deprecated
-    public User(String externalId, String nickname) {
-        this.externalId = externalId;
-        this.nickname = nickname;
-    }
-
     public static User guest(String deviceId, String nickname) {
         User u = new User();
         u.deviceId = deviceId;

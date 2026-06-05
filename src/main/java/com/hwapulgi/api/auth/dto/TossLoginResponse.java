@@ -5,6 +5,6 @@ public record TossLoginResponse(
         String nickname,
         String accessToken,
         String refreshToken,
-        int expiresIn
+        long expiresIn
 ) {
 }

@@ -39,8 +39,7 @@ public class TossAuthController {
     @PostMapping("/unlink")
     public ResponseEntity<ApiResponse<Void>> unlink(
             @RequestHeader("Authorization") String authorization) {
-        String accessToken = authorization.replace("Bearer ", "");
-        tossAuthService.unlink(accessToken);
+        tossAuthService.unlink(authorization);
         return ResponseEntity.ok(ApiResponse.ok());
     }
 

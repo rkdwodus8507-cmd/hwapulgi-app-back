@@ -47,7 +47,7 @@ class GameSessionServiceTest {
 
     @Test
     void createSession_validPoints_succeeds() {
-        User user = new User("1", "테스트");
+        User user = User.tossUser("1", "테스트");
         given(userService.findById(1L)).willReturn(user);
         given(gameSessionRepository.save(any(GameSession.class)))
                 .willAnswer(inv -> inv.getArgument(0));
@@ -64,7 +64,7 @@ class GameSessionServiceTest {
 
     @Test
     void createSession_invalidPoints_throwsException() {
-        User user = new User("1", "테스트");
+        User user = User.tossUser("1", "테스트");
         given(userService.findById(1L)).willReturn(user);
 
         GameSessionCreateRequest request = new GameSessionCreateRequest(

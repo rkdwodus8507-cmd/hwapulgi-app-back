@@ -23,7 +23,7 @@ public class UserService {
         return userRepository.findByExternalId(externalId)
                 .orElseGet(() -> {
                     try {
-                        return userRepository.saveAndFlush(new User(externalId, nickname));
+                        return userRepository.saveAndFlush(User.tossUser(externalId, nickname));
                     } catch (DataIntegrityViolationException e) {
                         return userRepository.findByExternalId(externalId)
                                 .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_ERROR));
