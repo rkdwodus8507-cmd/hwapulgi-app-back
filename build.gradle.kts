@@ -24,6 +24,9 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.apache.httpcomponents.client5:httpclient5")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
+	implementation("io.jsonwebtoken:jjwt-api:0.12.6")
+	runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
+	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 	testImplementation("com.github.codemonstur:embedded-redis:1.4.3") { exclude(group = "org.slf4j") }
 	compileOnly("org.projectlombok:lombok")
 	runtimeOnly("com.h2database:h2")
