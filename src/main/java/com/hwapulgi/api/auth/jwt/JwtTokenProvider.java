@@ -104,7 +104,3 @@ public class JwtTokenProvider {
         }
     }
 }
-
-record JwtPayload(long userId, String nickname) {}
-
-record JwtRefreshPayload(long userId) {}

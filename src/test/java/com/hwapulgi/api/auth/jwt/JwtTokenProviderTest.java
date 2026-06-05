@@ -54,4 +54,20 @@ class JwtTokenProviderTest {
         JwtRefreshPayload payload = provider.parseRefreshToken(refresh);
         assertThat(payload.userId()).isEqualTo(42L);
     }
+
+    @Test
+    void parseAccessToken_throws_when_given_a_refresh_token() {
+        String refresh = provider.createRefreshToken(1L);
+        assertThatThrownBy(() -> provider.parseAccessToken(refresh))
+            .isInstanceOf(BusinessException.class)
+            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.UNAUTHORIZED);
+    }
+
+    @Test
+    void parseRefreshToken_throws_when_given_an_access_token() {
+        String access = provider.createAccessToken(1L, "x");
+        assertThatThrownBy(() -> provider.parseRefreshToken(access))
+            .isInstanceOf(BusinessException.class)
+            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.UNAUTHORIZED);
+    }
 }
