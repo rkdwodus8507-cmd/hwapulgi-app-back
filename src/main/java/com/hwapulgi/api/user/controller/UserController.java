@@ -35,7 +35,7 @@ public class UserController {
     public ApiResponse<UserProfileResponse> getMyProfile(
             @RequestHeader(value = "Authorization", defaultValue = "") String token) {
         UserInfo userInfo = authService.authenticate(token);
-        User user = userService.getOrCreateUser(userInfo.getUserId(), userInfo.getNickname());
+        User user = userService.getOrCreateUser(userInfo.userId(), userInfo.nickname());
         return ApiResponse.ok(userService.getProfile(user.getId()));
     }
 
@@ -45,7 +45,7 @@ public class UserController {
             @RequestHeader(value = "Authorization", defaultValue = "") String token,
             @RequestParam(defaultValue = "weekly") String period) {
         UserInfo userInfo = authService.authenticate(token);
-        User user = userService.getOrCreateUser(userInfo.getUserId(), userInfo.getNickname());
+        User user = userService.getOrCreateUser(userInfo.userId(), userInfo.nickname());
 
         LocalDateTime from = switch (period) {
             case "monthly" -> LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay();
@@ -60,7 +60,7 @@ public class UserController {
     public ApiResponse<List<TargetStatsResponse>> getMyTargetStats(
             @RequestHeader(value = "Authorization", defaultValue = "") String token) {
         UserInfo userInfo = authService.authenticate(token);
-        User user = userService.getOrCreateUser(userInfo.getUserId(), userInfo.getNickname());
+        User user = userService.getOrCreateUser(userInfo.userId(), userInfo.nickname());
         return ApiResponse.ok(gameSessionService.getTargetStats(user.getId()));
     }
 }

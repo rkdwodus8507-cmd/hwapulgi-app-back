@@ -30,8 +30,8 @@ public class JwtTokenProvider {
         this(secret, accessExpirySeconds, refreshExpirySeconds, Clock.systemUTC());
     }
 
-    /** Package-private constructor for tests (clock injection) */
-    JwtTokenProvider(String secret, long accessExpirySeconds, long refreshExpirySeconds, Clock clock) {
+    /** Visible for tests (clock injection) */
+    public JwtTokenProvider(String secret, long accessExpirySeconds, long refreshExpirySeconds, Clock clock) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.accessExpirySeconds = accessExpirySeconds;
         this.refreshExpirySeconds = refreshExpirySeconds;
