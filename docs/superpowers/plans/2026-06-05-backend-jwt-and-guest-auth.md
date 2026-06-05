@@ -458,10 +458,7 @@ public class GuestAuthService {
 
 **Note on nickname assignment:** 신규 가입 시 `userId`가 필요하지만 `userId`는 save 후에 생성됨. 그래서 임시 닉네임으로 저장 → ID 받기 → updateNickname. 이 순서는 트랜잭션 내라 한 번의 flush로 처리됨.
 
-`ErrorCode.INVALID_INPUT`이 없으면 추가 (이미 있을 가능성 높음 — 확인 후 없으면 enum에 추가):
-```java
-INVALID_INPUT(HttpStatus.BAD_REQUEST, "잘못된 입력입니다");
-```
+`ErrorCode.INVALID_INPUT`은 이미 존재함 — enum 편집 불필요.
 
 - [ ] **Step 5: 테스트 통과 확인**
 
@@ -684,7 +681,7 @@ git commit -m "refactor: DevAuthService 제거, 통합 테스트를 JWT 헬퍼�
 
 **Files:**
 - Modify: `src/main/java/com/hwapulgi/api/auth/service/TossAuthService.java`
-- Modify: `src/main/java/com/hwapulgi/api/auth/dto/TossLoginResponse.java` (필드 의미 변경, 구조 동일)
+- Modify: `src/main/java/com/hwapulgi/api/auth/dto/TossLoginResponse.java` (필드 의미 변경. **`expiresIn` 타입을 `int` → `long`으로 변경**하여 `GuestLoginResponse`와 일관성 맞추고 `@Value("${jwt.access-token-expiry-seconds}") long accessExpiry`를 캐스팅 없이 전달 가능하게 함)
 
 - [ ] **Step 1: 기존 `TossAuthService` 테스트 상태 확인**
 
