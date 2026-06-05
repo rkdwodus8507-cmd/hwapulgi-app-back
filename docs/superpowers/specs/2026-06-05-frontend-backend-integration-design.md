@@ -78,7 +78,7 @@ Response: {
 - accessToken: 만료 1시간, claims `{ sub: userId, nickname }`
 - refreshToken: 만료 30일, claims `{ sub: userId, type: "refresh" }`
 - 게스트·토스 둘 다 같은 JWT 발급 → 인증 코드 일원화
-- `TossAuthService.login()`도 토스 access_token 대신 자체 JWT 반환하도록 수정
+- `TossAuthService.login()` 및 `refresh()` 둘 다 토스 access_token 대신 자체 JWT(access/refresh) 발급으로 변경. 토스 access_token은 백엔드 내부에서 `getLoginMe()` 호출까지만 사용하고 외부 노출하지 않음. `unlink()`는 자체 JWT에서 userId 추출 후 처리.
 
 ### 4. `DevAuthService` 제거
 
@@ -91,7 +91,7 @@ JWT_SECRET=<32바이트 이상 랜덤>
 APPINTOSS_API_KEY=<콘솔에서 발급받은 키>  # 토스 API 추가 인증 필요 시
 ```
 
-`application.properties`에서 `${JWT_SECRET}`, `${APPINTOSS_API_KEY:}`로 참조.
+`application.properties`(base 파일)에서 `${JWT_SECRET}`, `${APPINTOSS_API_KEY:}`로 참조하여 모든 프로파일에 공통 적용. 프로파일별 오버라이드 불필요.
 `.env.local`(gitignored), GitHub Actions Secret, 프로덕션 서버 env로 주입.
 
 ## Frontend Changes
@@ -172,7 +172,7 @@ accessToken / refreshToken → localStorage 'hwapulgi/auth'
 
 - `src/lib/storage.ts` 전체
 - `src/constants.ts`의 `STORAGE_KEY` (단, `INTRO_SEEN_STORAGE_KEY`는 유지)
-- `src/lib/auth.ts`의 throw-stub `tossLogin()` 함수 (게스트 인증으로 대체, 별도 파일로 이동)
+- `src/lib/auth.ts` **파일 자체** (rename + 내용 갱신 형태로 `src/lib/api/auth.ts`로 통째로 이동, stale 파일이 남지 않도록 함). 내부의 throw-stub `tossLogin()`은 게스트 인증으로 대체.
 
 ## Error Handling
 
@@ -215,3 +215,4 @@ accessToken / refreshToken → localStorage 'hwapulgi/auth'
 | 401 무한 루프 (refresh 실패→재로그인 실패→401) | 앱 행 | refresh 1회 + 게스트 재로그인 1회로 제한, 그 후엔 에러 throw |
 | 토스 로그인 풀린 후 게스트→토스 머지 정책 미정 | 추후 결정 미룸 | 본 스펙 외. `device_id`와 `external_id`가 한 user에 공존 가능하도록 스키마만 준비 |
 | React Query 학습 곡선 | 도입 후 일관성 깨질 가능성 | `queries/keys.ts` 팩토리 강제, 코드 리뷰에서 패턴 확인 |
+| `crypto.randomUUID()`는 HTTPS(혹은 localhost) 컨텍스트에서만 동작 | 게스트 ID 생성 실패 | dev 도메인은 `nip.io`로 HTTPS, 프로덕션은 토스 WebView이므로 문제 없음. QA 시 한 번 확인. |
