@@ -27,7 +27,7 @@ public class HomeController {
     public ApiResponse<HomeSnapshotResponse> getSnapshot(
             @RequestHeader(value = "Authorization", defaultValue = "") String token) {
         UserInfo userInfo = authService.authenticate(token);
-        User user = userService.getOrCreateUser(userInfo.userId(), userInfo.nickname());
+        User user = userService.findById(userInfo.userId());
         return ApiResponse.ok(homeService.getSnapshot(user.getId()));
     }
 }

@@ -6,7 +6,6 @@ import com.hwapulgi.api.user.dto.UserProfileResponse;
 import com.hwapulgi.api.user.entity.User;
 import com.hwapulgi.api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,20 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
-
-    @Transactional
-    public User getOrCreateUser(Long externalUserId, String nickname) {
-        String externalId = String.valueOf(externalUserId);
-        return userRepository.findByExternalId(externalId)
-                .orElseGet(() -> {
-                    try {
-                        return userRepository.saveAndFlush(User.tossUser(externalId, nickname));
-                    } catch (DataIntegrityViolationException e) {
-                        return userRepository.findByExternalId(externalId)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_ERROR));
-                    }
-                });
-    }
 
     public User findById(Long userId) {
         return userRepository.findById(userId)

@@ -30,7 +30,7 @@ public class ReportController {
     public ApiResponse<WeeklySummaryResponse> getWeeklySummary(
             @RequestHeader(value = "Authorization", defaultValue = "") String token) {
         UserInfo userInfo = authService.authenticate(token);
-        User user = userService.getOrCreateUser(userInfo.userId(), userInfo.nickname());
+        User user = userService.findById(userInfo.userId());
         return ApiResponse.ok(reportService.getWeeklySummary(user.getId()));
     }
 
@@ -39,7 +39,7 @@ public class ReportController {
     public ApiResponse<List<WeeklyArchiveResponse>> getWeeklyArchives(
             @RequestHeader(value = "Authorization", defaultValue = "") String token) {
         UserInfo userInfo = authService.authenticate(token);
-        User user = userService.getOrCreateUser(userInfo.userId(), userInfo.nickname());
+        User user = userService.findById(userInfo.userId());
         return ApiResponse.ok(reportService.getWeeklyArchives(user.getId()));
     }
 }

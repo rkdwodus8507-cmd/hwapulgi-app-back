@@ -13,7 +13,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,28 +25,17 @@ class UserServiceTest {
     private UserService userService;
 
     @Test
-    void getOrCreateUser_existingUser_returnsUser() {
+    void findById_returnsUser_whenPresent() {
         User existing = User.tossUser("1", "기존유저");
-        given(userRepository.findByExternalId("1")).willReturn(Optional.of(existing));
+        given(userRepository.findById(1L)).willReturn(Optional.of(existing));
 
-        User result = userService.getOrCreateUser(1L, "기존유저");
+        User result = userService.findById(1L);
 
         assertThat(result.getNickname()).isEqualTo("기존유저");
     }
 
     @Test
-    void getOrCreateUser_newUser_createsAndReturns() {
-        given(userRepository.findByExternalId("2")).willReturn(Optional.empty());
-        User newUser = User.tossUser("2", "새유저");
-        given(userRepository.saveAndFlush(any(User.class))).willReturn(newUser);
-
-        User result = userService.getOrCreateUser(2L, "새유저");
-
-        assertThat(result.getNickname()).isEqualTo("새유저");
-    }
-
-    @Test
-    void findById_notFound_throwsBusinessException() {
+    void findById_throws_whenNotFound() {
         given(userRepository.findById(999L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.findById(999L))

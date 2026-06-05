@@ -37,7 +37,7 @@ public class GameSessionController {
             @RequestHeader(value = "Authorization", defaultValue = "") String token,
             @Valid @RequestBody GameSessionCreateRequest request) {
         UserInfo userInfo = authService.authenticate(token);
-        User user = userService.getOrCreateUser(userInfo.userId(), userInfo.nickname());
+        User user = userService.findById(userInfo.userId());
         return ApiResponse.ok(gameSessionService.createSession(user.getId(), request));
     }
 
@@ -47,7 +47,7 @@ public class GameSessionController {
             @RequestHeader(value = "Authorization", defaultValue = "") String token,
             @PageableDefault(size = 20) Pageable pageable) {
         UserInfo userInfo = authService.authenticate(token);
-        User user = userService.getOrCreateUser(userInfo.userId(), userInfo.nickname());
+        User user = userService.findById(userInfo.userId());
         return ApiResponse.ok(gameSessionService.getMySessions(user.getId(), pageable));
     }
 
@@ -57,7 +57,7 @@ public class GameSessionController {
             @RequestHeader(value = "Authorization", defaultValue = "") String token,
             @PathVariable UUID id) {
         UserInfo userInfo = authService.authenticate(token);
-        User user = userService.getOrCreateUser(userInfo.userId(), userInfo.nickname());
+        User user = userService.findById(userInfo.userId());
         return ApiResponse.ok(gameSessionService.getSession(id, user.getId()));
     }
 
@@ -68,7 +68,7 @@ public class GameSessionController {
             @PathVariable UUID id,
             @Valid @RequestBody AngerAfterUpdateRequest request) {
         UserInfo userInfo = authService.authenticate(token);
-        User user = userService.getOrCreateUser(userInfo.userId(), userInfo.nickname());
+        User user = userService.findById(userInfo.userId());
         return ApiResponse.ok(gameSessionService.updateAngerAfter(id, user.getId(), request.getAngerAfter()));
     }
 
@@ -77,7 +77,7 @@ public class GameSessionController {
     public ApiResponse<List<String>> getRecentTargets(
             @RequestHeader(value = "Authorization", defaultValue = "") String token) {
         UserInfo userInfo = authService.authenticate(token);
-        User user = userService.getOrCreateUser(userInfo.userId(), userInfo.nickname());
+        User user = userService.findById(userInfo.userId());
         return ApiResponse.ok(gameSessionService.getRecentCustomTargets(user.getId()));
     }
 
@@ -86,7 +86,7 @@ public class GameSessionController {
     public ApiResponse<List<String>> getRecentNicknames(
             @RequestHeader(value = "Authorization", defaultValue = "") String token) {
         UserInfo userInfo = authService.authenticate(token);
-        User user = userService.getOrCreateUser(userInfo.userId(), userInfo.nickname());
+        User user = userService.findById(userInfo.userId());
         return ApiResponse.ok(gameSessionService.getRecentNicknames(user.getId()));
     }
 }
