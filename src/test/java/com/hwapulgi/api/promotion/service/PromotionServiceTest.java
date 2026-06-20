@@ -1,6 +1,7 @@
 package com.hwapulgi.api.promotion.service;
 
 import com.hwapulgi.api.common.exception.BusinessException;
+import com.hwapulgi.api.common.exception.ErrorCode;
 import com.hwapulgi.api.promotion.client.PromotionClient;
 import com.hwapulgi.api.promotion.dto.DailyClaimResponse;
 import com.hwapulgi.api.promotion.dto.DailyStatusResponse;
@@ -28,6 +29,7 @@ import static org.mockito.Mockito.*;
 class PromotionServiceTest {
 
     @Mock private DailyPointGrantRepository grantRepository;
+    @Mock private DailyPointGrantTx grantTx;
     @Mock private PromotionClient promotionClient;
     @Mock private UserService userService;
 
@@ -39,16 +41,19 @@ class PromotionServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new PromotionService(grantRepository, promotionClient, userService,
+        service = new PromotionService(grantRepository, grantTx, promotionClient, userService,
                 fixedClock, "DAILY", 100);
+    }
+
+    private DailyPointGrant reservedGrant() {
+        return DailyPointGrant.builder()
+                .userId(1L).grantDate(today).promotionCode("DAILY").amount(100).build();
     }
 
     @Test
     void claimDaily_firstClaim_succeeds() {
-        given(grantRepository.findByUserIdAndGrantDate(1L, today)).willReturn(Optional.empty());
         given(userService.findById(1L)).willReturn(User.tossUser("12345", "닉"));
-        given(grantRepository.saveAndFlush(any(DailyPointGrant.class)))
-                .willAnswer(inv -> inv.getArgument(0));
+        given(grantTx.reserveOrReuse(1L, today, "DAILY", 100)).willReturn(reservedGrant());
         given(promotionClient.generateKey("12345")).willReturn("KEY_ABC");
 
         DailyClaimResponse response = service.claimDaily(1L);
@@ -56,15 +61,14 @@ class PromotionServiceTest {
         assertThat(response.granted()).isTrue();
         assertThat(response.amount()).isEqualTo(100);
         verify(promotionClient).executePromotion("12345", "DAILY", "KEY_ABC", 100);
+        verify(grantTx).markCompleted(any(), eq("KEY_ABC"));
+        verify(grantTx, never()).markFailed(any());
     }
 
     @Test
     void claimDaily_alreadyCompletedToday_throwsAndSkipsToss() {
-        DailyPointGrant completed = DailyPointGrant.builder()
-                .userId(1L).grantDate(today).promotionCode("DAILY").amount(100).build();
-        completed.markCompleted("KEY_OLD");
-        given(grantRepository.findByUserIdAndGrantDate(1L, today))
-                .willReturn(Optional.of(completed));
+        given(grantTx.reserveOrReuse(1L, today, "DAILY", 100))
+                .willThrow(new BusinessException(ErrorCode.ALREADY_CLAIMED));
 
         assertThatThrownBy(() -> service.claimDaily(1L))
                 .isInstanceOf(BusinessException.class);
@@ -73,16 +77,17 @@ class PromotionServiceTest {
     }
 
     @Test
-    void claimDaily_tossFails_propagatesException() {
-        given(grantRepository.findByUserIdAndGrantDate(1L, today)).willReturn(Optional.empty());
+    void claimDaily_tossFails_marksFailedAndPropagates() {
         given(userService.findById(1L)).willReturn(User.tossUser("12345", "닉"));
-        given(grantRepository.saveAndFlush(any(DailyPointGrant.class)))
-                .willAnswer(inv -> inv.getArgument(0));
+        given(grantTx.reserveOrReuse(1L, today, "DAILY", 100)).willReturn(reservedGrant());
         given(promotionClient.generateKey("12345"))
-                .willThrow(new BusinessException(com.hwapulgi.api.common.exception.ErrorCode.PROMOTION_FAILED));
+                .willThrow(new BusinessException(ErrorCode.PROMOTION_FAILED));
 
         assertThatThrownBy(() -> service.claimDaily(1L))
                 .isInstanceOf(BusinessException.class);
+
+        verify(grantTx).markFailed(any());
+        verify(grantTx, never()).markCompleted(any(), anyString());
     }
 
     @Test
