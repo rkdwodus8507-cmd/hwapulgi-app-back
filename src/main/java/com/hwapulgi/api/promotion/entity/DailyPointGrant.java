@@ -60,4 +60,8 @@ public class DailyPointGrant {
         this.tossKey = tossKey;
         this.status = GrantStatus.COMPLETED;
     }
+
+    public void markFailed() {
+        this.status = GrantStatus.FAILED;
+    }
 }
