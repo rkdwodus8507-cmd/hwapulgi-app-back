@@ -33,6 +33,20 @@
 │ memo        TEXT        │  └─────────────────────────┘
 │ created_at  TIMESTAMP   │
 └─────────────────────────┘
+
+┌─────────────────────────┐
+│   daily_point_grants    │
+├─────────────────────────┤
+│ id             BIGINT PK│
+│ user_id        BIGINT FK│
+│ grant_date     DATE     │
+│ promotion_code VARCHAR  │
+│ amount         INTEGER  │
+│ toss_key       VARCHAR  │
+│ status         ENUM     │
+│ created_at     TIMESTAMP│
+└─────────────────────────┘
+  UNIQUE(user_id, grant_date)
 ```
 
 ## 테이블 상세
@@ -127,6 +141,33 @@ points = 10 + hits + (skillShots × 4) + floor((angerBefore - min(angerAfter, an
 **Unique Constraint:** `(user_id, achievement_type)` — 중복 방지
 
 **업적 타입:** HITS_100, HITS_500, HITS_1000, SESSIONS_10, SESSIONS_50, SESSIONS_100, RELEASE_80, RELEASE_90, RELEASE_100, STREAK_3, STREAK_7, STREAK_30, POINTS_500, POINTS_1000
+
+---
+
+### daily_point_grants
+
+일일 출석 포인트 적립 기록. 하루 1회 토스 프로모션 API로 포인트를 지급하고 그 결과를 저장합니다.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | BIGINT | PK, AUTO_INCREMENT | 적립 ID |
+| user_id | BIGINT | FK → users, NOT NULL | 사용자 |
+| grant_date | DATE | NOT NULL | 적립 대상 날짜 (Asia/Seoul 기준) |
+| promotion_code | VARCHAR | NOT NULL | 토스 프로모션 코드 |
+| amount | INTEGER | NOT NULL | 적립 포인트 |
+| toss_key | VARCHAR | nullable | 토스 멱등키 (COMPLETED 시 기록) |
+| status | VARCHAR (ENUM) | NOT NULL | REQUESTED, COMPLETED, FAILED |
+| created_at | TIMESTAMP | auto | 생성 시각 |
+
+**JPA Entity:** `com.hwapulgi.api.promotion.entity.DailyPointGrant`
+
+**Unique Constraint:** `(user_id, grant_date)` (`uq_daily_point_grant_user_date`) — 같은 날 중복 적립 방지
+
+**상태 흐름:** `REQUESTED`(선점 예약) → 토스 프로모션 호출 성공 시 `markCompleted()` → `COMPLETED`
+
+**주요 쿼리:**
+- `findByUserIdAndGrantDate(userId, date)` — 당일 적립 여부 조회 (수령/상태 판단)
+- `findTopByUserIdAndStatusOrderByGrantDateDesc(userId, COMPLETED)` — 마지막 수령 시각 조회
 
 ---
 
