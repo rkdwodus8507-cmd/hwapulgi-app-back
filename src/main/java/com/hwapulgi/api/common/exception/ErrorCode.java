@@ -14,7 +14,9 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "사용자를 찾을 수 없습니다."),
     SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "SESSION_NOT_FOUND", "세션을 찾을 수 없습니다."),
     POINTS_MISMATCH(HttpStatus.BAD_REQUEST, "POINTS_MISMATCH", "포인트 검증에 실패했습니다."),
-    RANKING_NOT_FOUND(HttpStatus.NOT_FOUND, "RANKING_NOT_FOUND", "랭킹 정보를 찾을 수 없습니다.");
+    RANKING_NOT_FOUND(HttpStatus.NOT_FOUND, "RANKING_NOT_FOUND", "랭킹 정보를 찾을 수 없습니다."),
+    ALREADY_CLAIMED(HttpStatus.CONFLICT, "ALREADY_CLAIMED", "오늘은 이미 포인트를 받았습니다."),
+    PROMOTION_FAILED(HttpStatus.BAD_GATEWAY, "PROMOTION_FAILED", "포인트 적립에 실패했습니다. 잠시 후 다시 시도해주세요.");
 
     private final HttpStatus status;
     private final String code;
