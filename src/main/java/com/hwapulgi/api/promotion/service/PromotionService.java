@@ -11,6 +11,7 @@ import com.hwapulgi.api.promotion.repository.DailyPointGrantRepository;
 import com.hwapulgi.api.user.entity.User;
 import com.hwapulgi.api.user.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ public class PromotionService {
     private final String promotionCode;
     private final int amount;
 
+    @Autowired
     public PromotionService(
             DailyPointGrantRepository grantRepository,
             PromotionClient promotionClient,
