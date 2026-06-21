@@ -1,7 +1,9 @@
 package com.hwapulgi.api.auth.service;
 
 import com.hwapulgi.api.auth.client.AppsInTossClient;
+import com.hwapulgi.api.auth.crypto.TossDataDecryptor;
 import com.hwapulgi.api.auth.dto.*;
+import com.hwapulgi.api.auth.dto.TossLoginMeResponse.LoginMeSuccess;
 import com.hwapulgi.api.auth.jwt.JwtPayload;
 import com.hwapulgi.api.auth.jwt.JwtRefreshPayload;
 import com.hwapulgi.api.auth.jwt.JwtTokenProvider;
@@ -23,6 +25,7 @@ public class TossAuthService {
     private final AppsInTossClient appsInTossClient;
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final TossDataDecryptor tossDataDecryptor;
 
     @Value("${jwt.access-token-expiry-seconds}")
     private long accessExpiry;
@@ -49,14 +52,14 @@ public class TossAuthService {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
-        // TODO: Client ID 발급 후 개인정보 복호화 로직 추가 (AES-256-GCM)
-        Long tossUserKey = loginMeResponse.success().userKey();
+        LoginMeSuccess me = loginMeResponse.success();
+        Long tossUserKey = me.userKey();
         String externalId = String.valueOf(tossUserKey);
 
-        // 3. 기존 유저 조회 or 신규 생성
+        // 3. 기존 유저 조회 or 신규 생성 (신규 시 복호화한 이름을 닉네임으로 사용)
         User user = userRepository.findByExternalId(externalId)
                 .orElseGet(() -> userRepository.save(
-                        User.tossUser(externalId, "토스유저" + tossUserKey)
+                        User.tossUser(externalId, resolveNickname(me, tossUserKey))
                 ));
 
         // 4. 자체 JWT 발급 (토스 access_token은 외부 노출하지 않음)
@@ -67,6 +70,23 @@ public class TossAuthService {
                 jwtTokenProvider.createRefreshToken(user.getId()),
                 accessExpiry
         );
+    }
+
+    /**
+     * 신규 가입 시 사용할 닉네임을 결정한다.
+     * 토스가 내려준 암호화된 이름을 복호화해 사용하고, 복호화 키 미설정·미동의·실패 시에는
+     * "토스유저{userKey}"로 폴백한다(로그인 자체는 이름 복호화 실패와 무관하게 성공해야 함).
+     */
+    private String resolveNickname(LoginMeSuccess me, Long userKey) {
+        try {
+            String name = tossDataDecryptor.decrypt(me.name());
+            if (name != null && !name.isBlank()) {
+                return name;
+            }
+        } catch (Exception e) {
+            log.warn("토스 사용자 이름 복호화 실패, 기본 닉네임 사용: userKey={}", userKey, e);
+        }
+        return "토스유저" + userKey;
     }
 
     public TossLoginResponse refresh(String refreshToken) {

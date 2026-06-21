@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 // TODO: Client ID 발급 후 추가 작업
 //  - [ ] Client ID 발급 (사업자 등록 필요 여부 확인)
-//  - [ ] AES 복호화 키 수령 후 개인정보 복호화 구현
+//  - [x] AES 복호화 키 수령 후 개인정보 복호화 구현 (TossDataDecryptor / 환경변수 APPINTOSS_LOGIN_DECRYPT_KEY)
 //  - [ ] 프론트 appLogin() SDK 호출 연동
 @RestController
 @RequestMapping("/api/auth/toss")
