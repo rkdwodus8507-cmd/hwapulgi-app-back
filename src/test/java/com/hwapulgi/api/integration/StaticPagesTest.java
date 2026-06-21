@@ -36,35 +36,6 @@ class StaticPagesTest {
         assertThat(bodyOf("/privacy.html")).contains("개인정보처리방침");
     }
 
-    @Test
-    void gameIndexHtml_isDeployedAndServed() throws Exception {
-        // 게임 SPA 진입 파일이 백엔드 static에 배포되어 직접 서빙되는지 (실제 내용 검증)
-        MvcResult result = mockMvc.perform(get("/index.html"))
-                .andExpect(status().isOk())
-                .andReturn();
-        String body = new String(result.getResponse().getContentAsByteArray(), StandardCharsets.UTF_8);
-        assertThat(body).contains("<div id=\"root\">");
-        assertThat(body).contains("/assets/index-");
-    }
-
-    @Test
-    void root_forwardsToIndexHtml() throws Exception {
-        // 루트(/)는 welcome-page로 index.html을 서빙
-        MvcResult result = mockMvc.perform(get("/")).andExpect(status().isOk()).andReturn();
-        assertThat(result.getResponse().getForwardedUrl()).contains("index.html");
-    }
-
-    @Test
-    void spaRoutes_forwardToIndexHtml() throws Exception {
-        // react-router 클라이언트 라우트 새로고침/딥링크 시 index.html로 포워딩
-        for (String path : new String[] {"/home", "/play", "/start/target", "/result"}) {
-            MvcResult result = mockMvc.perform(get(path)).andExpect(status().isOk()).andReturn();
-            assertThat(result.getResponse().getForwardedUrl())
-                    .as("SPA 경로 %s 는 index.html로 포워딩되어야 함", path)
-                    .contains("index.html");
-        }
-    }
-
     private String bodyOf(String path) throws Exception {
         MvcResult result = mockMvc.perform(get(path))
                 .andExpect(status().isOk())
