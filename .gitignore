@@ -38,6 +38,11 @@ out/
 
 ### mTLS Certificates ###
 src/main/resources/certs/
+src/main/resources/certs.zip
+src/test/resources/certs/
 
 ### Worktrees ###
 .worktrees/
+
+### Claude ###
+.claude/
