@@ -25,15 +25,19 @@ public class DailyPointGrantTx {
     private final DailyPointGrantRepository grantRepository;
 
     /**
-     * 당일 적립 행을 선점한다. 이미 COMPLETED면 중복 수령으로 거부하고,
-     * REQUESTED/FAILED면 재시도를 위해 기존 행을 재사용한다.
+     * 당일 적립 행을 선점한다.
+     * FAILED면 정당한 재시도로 보아 기존 행을 재사용하고, COMPLETED(이미 수령)나
+     * REQUESTED(다른 요청이 처리 중)면 중복으로 거부한다. REQUESTED를 재사용하지 않는 것이
+     * 동시 요청 시 이중 적립을 막는 핵심이다.
+     * (프로세스가 reserve 직후 비정상 종료하면 REQUESTED 행이 남아 그날은 차단될 수 있으나,
+     *  이중 적립보다 안전한 실패 모드다.)
      */
     @Transactional
     public DailyPointGrant reserveOrReuse(Long userId, LocalDate date, String promotionCode, int amount) {
         Optional<DailyPointGrant> existing = grantRepository.findByUserIdAndGrantDate(userId, date);
         if (existing.isPresent()) {
             DailyPointGrant grant = existing.get();
-            if (grant.getStatus() == GrantStatus.COMPLETED) {
+            if (grant.getStatus() != GrantStatus.FAILED) {
                 throw new BusinessException(ErrorCode.ALREADY_CLAIMED);
             }
             return grant;
